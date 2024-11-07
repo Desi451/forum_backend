@@ -1,0 +1,6 @@
+@forum_backend_HostAddress = http://localhost:5179
+
+GET {{forum_backend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
