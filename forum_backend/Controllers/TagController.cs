@@ -17,7 +17,7 @@ public class TagController : ControllerBase
     }
 
     [HttpGet(Name = "Tags")]
-    public async Task<List<Tag>> Get()
+    public async Task<List<Tags>> Get()
     {
        return await _context.Tags.ToListAsync();
     }
