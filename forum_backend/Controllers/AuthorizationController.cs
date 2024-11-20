@@ -14,9 +14,8 @@ namespace forum_backend.Controllers
             _authorizationService = authorizationService;
         }
 
-        [HttpPost]
-        [Route("Register")]
-        public async Task<IActionResult> Register(UserDTO user)
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] UserDTO user)
         {
             return await _authorizationService.Register(user);
         }
