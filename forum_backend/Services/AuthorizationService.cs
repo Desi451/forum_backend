@@ -1,4 +1,5 @@
 ﻿using forum_backend.Database.Context;
+using forum_backend.DTOs;
 using forum_backend.Entities;
 using forum_backend.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -6,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace forum_backend.Services
 {
@@ -21,7 +21,7 @@ namespace forum_backend.Services
             _configuration = configuration;
         }
 
-        public async Task<IActionResult> Register(Users user)
+        public async Task<IActionResult> Register(UserDTO user)
         {
             if (!ValidateEmail(user.EMail) || string.IsNullOrWhiteSpace(user.EMail))
             {
@@ -53,11 +53,19 @@ namespace forum_backend.Services
 
             try
             {
-                user.CreationDate = DateTime.Now;
-                user.ProfilePicture = null;
-                user.Role = 0;
-                user.status = 0;
-                _context.Users.Add(user);
+                var newUser = new Users
+                {
+                    Nickname = user.Login,
+                    Login = user.Login,
+                    Password = user.Password,
+                    EMail = user.EMail,
+                    CreationDate = DateTime.Now,
+                    ProfilePicture = null,
+                    Role = 0,
+                    status = 0
+                };
+
+                _context.Users.Add(newUser);
                 await _context.SaveChangesAsync();
                 return new OkObjectResult(new { message = "User has been successfully registered." });
             }

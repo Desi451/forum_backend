@@ -1,7 +1,5 @@
-﻿using forum_backend.Database.Context;
-using forum_backend.Entities;
+﻿using forum_backend.DTOs;
 using forum_backend.Interfaces;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace forum_backend.Controllers
@@ -18,7 +16,7 @@ namespace forum_backend.Controllers
 
         [HttpPost]
         [Route("Register")]
-        public async Task<IActionResult> Register(Users user)
+        public async Task<IActionResult> Register(UserDTO user)
         {
             return await _authorizationService.Register(user);
         }
