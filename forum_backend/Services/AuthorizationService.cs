@@ -28,26 +28,37 @@ namespace forum_backend.Services
         {
             if (!ValidateEmail(user.EMail) || string.IsNullOrWhiteSpace(user.EMail))
             {
-                return new BadRequestObjectResult(new { error = "InvalidEmail",
-                    message = "Invalid email address." });
+                return new BadRequestObjectResult(new
+                {
+                    error = "InvalidEmail",
+                    message = "Invalid email address."
+                });
             }
 
-            if (await _context.Users.AnyAsync(x => x.EMail.Equals(user.EMail)) 
+            if (await _context.Users.AnyAsync(x => x.EMail.Equals(user.EMail))
                 || await _context.Users.AnyAsync(x => x.Login.Equals(user.Login)))
             {
-                return new BadRequestObjectResult( new { error = "EmailOrLoginAlreadyExist", 
-                    message = "User with the login name or email address you are using already exists." });
+                return new BadRequestObjectResult(new
+                {
+                    error = "EmailOrLoginAlreadyExist",
+                    message = "User with the login name or email address you are using already exists."
+                });
             }
 
             if (!ValidateLoginOrNickname(user.Login) || string.IsNullOrWhiteSpace(user.Login))
             {
-                return new BadRequestObjectResult(new { error = "InvalidLogin",
-                    message = "Your login must be between 5 and 12 characters long and can only consist of letters and numbers." });
+                return new BadRequestObjectResult(new
+                {
+                    error = "InvalidLogin",
+                    message = "Your login must be between 5 and 12 characters long and can only consist of letters and numbers."
+                });
             }
 
             if (!ValidatePassword(user.Password) || string.IsNullOrWhiteSpace(user.Password))
             {
-                return new BadRequestObjectResult(new { error = "InvalidPassword",
+                return new BadRequestObjectResult(new
+                {
+                    error = "InvalidPassword",
                     message = "The password cannot be too short (min. 8 characters) and must contain letters and numbers."
                 });
             }
