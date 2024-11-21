@@ -20,5 +20,12 @@ namespace forum_backend.Controllers
         {
             return await _authorizationService.Register(user);
         }
+
+        [HttpPost]
+        [Route("Login")]
+        public async Task<IActionResult> Login(LoginDTO login)
+        {
+            return await _authorizationService.Login(login);
+        }
     }
 }

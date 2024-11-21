@@ -6,5 +6,6 @@ namespace forum_backend.Interfaces
     public interface IAuthorizationService
     {
         Task<IActionResult> Register(UserDTO user);
+        Task<IActionResult> Login(LoginDTO login);
     }
 }
