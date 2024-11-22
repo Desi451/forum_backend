@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace forum_backend.Interfaces
 {
-    public interface IAuthorizationService
+    public interface IAuthService
     {
         Task<IActionResult> Register(UserDTO user);
         Task<IActionResult> Login(LoginDTO login);

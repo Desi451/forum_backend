@@ -13,12 +13,12 @@ using System.Text.RegularExpressions;
 
 namespace forum_backend.Services
 {
-    public class AuthorizationService : IAuthorizationService
+    public class AuthService : IAuthService
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
 
-        public AuthorizationService(AppDbContext context, IConfiguration configuration)
+        public AuthService(AppDbContext context, IConfiguration configuration)
         {
             _context = context;
             _configuration = configuration;
@@ -85,8 +85,11 @@ namespace forum_backend.Services
             }
             catch (Exception ex)
             {
-                return new BadRequestObjectResult(new { error = ex, 
-                    message = "An error occurred while registering the user." });
+                return new BadRequestObjectResult(new
+                {
+                    error = ex, 
+                    message = "An error occurred while registering the user."
+                });
             }
         }
 
@@ -96,14 +99,20 @@ namespace forum_backend.Services
 
             if (user == null)
             {
-                return new BadRequestObjectResult(new { error = "IncorrectLoginOrEmail",
-                    message = "Incorrect email or login." });
+                return new BadRequestObjectResult(new
+                {
+                    error = "IncorrectLoginOrEmail",
+                    message = "Incorrect email or login."
+                });
             }
 
             if (!CheckPassword(login.Password, user.Password))
             {
-                return new BadRequestObjectResult(new { error = "IncorrectPasssword",
-                    message = "Incorrect password." });
+                return new BadRequestObjectResult(new
+                {
+                    error = "IncorrectPasssword",
+                    message = "Incorrect password."
+                });
             }
 
             var token = JWTGenerator(user);

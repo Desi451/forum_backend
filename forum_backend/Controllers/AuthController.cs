@@ -6,10 +6,10 @@ namespace forum_backend.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthorizationController : ControllerBase
+    public class AuthController : ControllerBase
     {
-        private readonly IAuthorizationService _authorizationService;
-        public AuthorizationController(IAuthorizationService authorizationService)
+        private readonly IAuthService _authorizationService;
+        public AuthController(IAuthService authorizationService)
         {
             _authorizationService = authorizationService;
         }
