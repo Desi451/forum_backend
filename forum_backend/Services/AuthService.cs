@@ -2,6 +2,7 @@
 using forum_backend.DTOs;
 using forum_backend.Entities;
 using forum_backend.Interfaces;
+using forum_backend.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -24,7 +25,7 @@ namespace forum_backend.Services
             _configuration = configuration;
         }
 
-        public async Task<IActionResult> Register(UserDTO user)
+        public async Task<IActionResult> Register(RegisterDTO user)
         {
             if (!ValidateEmail(user.EMail) || string.IsNullOrWhiteSpace(user.EMail))
             {
@@ -63,7 +64,7 @@ namespace forum_backend.Services
                 });
             }
 
-            user.Password = HashPassword(user.Password);
+            user.Password = PasswordHelper.HashPassword(user.Password);
 
             try
             {
@@ -81,6 +82,7 @@ namespace forum_backend.Services
 
                 _context.Users.Add(newUser);
                 await _context.SaveChangesAsync();
+
                 return new OkObjectResult(new { message = "User has been successfully registered." });
             }
             catch (Exception ex)
@@ -106,7 +108,7 @@ namespace forum_backend.Services
                 });
             }
 
-            if (!CheckPassword(login.Password, user.Password))
+            if (!PasswordHelper.CheckPassword(login.Password, user.Password))
             {
                 return new BadRequestObjectResult(new
                 {
@@ -117,48 +119,6 @@ namespace forum_backend.Services
 
             var token = JWTGenerator(user);
             return new OkObjectResult(new { token });
-        }
-
-        private static bool CheckPassword(string enteredPassword, string hashedPassword)
-        {
-            byte[] hashBytes = Convert.FromBase64String(hashedPassword);
-
-            byte[] salt = new byte[16];
-            Array.Copy(hashBytes, 0, salt, 0, 16);
-
-            byte[] enteredPasswordBytes = Encoding.UTF8.GetBytes(enteredPassword);
-            Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(enteredPasswordBytes, salt, 10000, HashAlgorithmName.SHA256);
-
-            byte[] enteredHash = pbkdf2.GetBytes(20);
-
-            for (int i = 0; i < 20; i++)
-            {
-                if (hashBytes[i + 16] != enteredHash[i])
-                {
-                    return false;
-                }
-            }
-
-            return true;
-        }
-
-        private static string HashPassword(string password)
-        {
-            byte[] salt = new byte[16];
-            RandomNumberGenerator rng = RandomNumberGenerator.Create();
-            rng.GetBytes(salt);
-
-            byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
-
-            Rfc2898DeriveBytes pbkdf2 = new Rfc2898DeriveBytes(passwordBytes, salt, 10000, HashAlgorithmName.SHA256);
-
-            byte[] hash = pbkdf2.GetBytes(20);
-
-            byte[] hashWithSalt = new byte[36];
-            Array.Copy(salt, 0, hashWithSalt, 0, 16);
-            Array.Copy(hash, 0, hashWithSalt, 16, 20);
-
-            return Convert.ToBase64String(hashWithSalt);
         }
 
         private static bool ValidateEmail(string email)

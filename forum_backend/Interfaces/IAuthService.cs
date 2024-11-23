@@ -5,7 +5,7 @@ namespace forum_backend.Interfaces
 {
     public interface IAuthService
     {
-        Task<IActionResult> Register(UserDTO user);
+        Task<IActionResult> Register(RegisterDTO user);
         Task<IActionResult> Login(LoginDTO login);
     }
 }
