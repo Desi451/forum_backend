@@ -15,28 +15,28 @@ namespace forum_backend.Controllers
             _userService = userService;
         }
 
-        [HttpGet("update-nickname")]
-        public async Task<IActionResult> UpdateNickname([FromBody] UpdateNicknameDTO nickname)
+        [HttpPut("update-nickname/{id}")]
+        public async Task<IActionResult> UpdateNickname([FromBody] UpdateNicknameDTO nickname, [FromRoute] int id)
         {
-            return await _userService.UpdateNickname(nickname);
+            return await _userService.UpdateNickname(nickname, id);
         }
 
-        [HttpPost("update-login")]
-        public async Task<IActionResult> UpdateLogin([FromBody] UpdateLoginDTO login)
+        [HttpPut("update-email/{id}")]
+        public async Task<IActionResult> UpdateEMail([FromBody] UpdateEMailDTO email, [FromRoute] int id)
         {
-            return await _userService.UpdateLogin(login);
+            return await _userService.UpdateEMail(email, id);
         }
 
-        [HttpPost("update-password")]
-        public async Task<IActionResult> UpdatePassword([FromBody] UpdatePasswordDTO password)
+        [HttpPut("update-password/{id}")]
+        public async Task<IActionResult> UpdatePassword([FromBody] UpdatePasswordDTO password, [FromRoute] int id)
         {
-            return await _userService.UpdatePassword(password);
+            return await _userService.UpdatePassword(password, id);
         }
 
-        [HttpPost("update-pfp")]
-        public async Task<IActionResult> UpdatePFP([FromBody] UpdatePFPDTO pfp)
+        [HttpPut("update-pfp/{id}")]
+        public async Task<IActionResult> UpdatePFP([FromBody] UpdatePFPDTO pfp, [FromRoute] int id)
         {
-            return await _userService.UpdatePFP(pfp);
+            return await _userService.UpdatePFP(pfp, id);
         }
     }
 }

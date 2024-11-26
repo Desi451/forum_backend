@@ -18,7 +18,7 @@ namespace forum_backend.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<IActionResult> UpdateNickname(UpdateNicknameDTO nickname)
+        public async Task<IActionResult> UpdateNickname(UpdateNicknameDTO nickname, int id)
         {
             var userIdFromToken = _httpContextAccessor.HttpContext?.User.FindFirst("UserID")?.Value;
 
@@ -49,7 +49,7 @@ namespace forum_backend.Services
             return new OkObjectResult(new { message = "Nickname successfully changed." });
         }
 
-        public async Task<IActionResult> UpdateLogin(UpdateLoginDTO login)
+        public async Task<IActionResult> UpdateEMail(UpdateEMailDTO email, int id)
         {
             var userIdFromToken = _httpContextAccessor.HttpContext?.User.FindFirst("UserID")?.Value;
 
@@ -73,24 +73,33 @@ namespace forum_backend.Services
                 });
             }
 
-            var existingLogin= await _context.Users.FirstOrDefaultAsync(x => x.Login.Equals(login.NewLogin));
+            if (!ValidationHelper.ValidateEmail(email.NewEMail) || string.IsNullOrWhiteSpace(email.NewEMail))
+            {
+                return new BadRequestObjectResult(new
+                {
+                    error = "InvalidEmail",
+                    message = "Invalid email address."
+                });
+            }
+
+            var existingLogin= await _context.Users.FirstOrDefaultAsync(x => x.Login.Equals(email.NewEMail));
 
             if (existingLogin != null)
             {
                 return new BadRequestObjectResult(new
                 {
-                    error = "LoginTaken",
-                    message = "This login is already taken."
+                    error = "EMailTaken",
+                    message = "This email is already taken."
                 });
             }
 
-            user.Login = login.NewLogin;
+            user.Login = email.NewEMail;
             await _context.SaveChangesAsync();
 
             return new OkObjectResult(new { message = "Login successfully changed." });
         }
 
-        public async Task<IActionResult> UpdatePassword(UpdatePasswordDTO password)
+        public async Task<IActionResult> UpdatePassword(UpdatePasswordDTO password, int id)
         {
             var userIdFromToken = _httpContextAccessor.HttpContext?.User.FindFirst("UserID")?.Value;
 
@@ -111,6 +120,24 @@ namespace forum_backend.Services
                 {
                     error = "UserNotFound",
                     message = "User not found."
+                });
+            }
+
+            if (!ValidationHelper.ValidatePassword(password.NewPassword) || string.IsNullOrWhiteSpace(password.NewPassword))
+            {
+                return new BadRequestObjectResult(new
+                {
+                    error = "InvalidPassword",
+                    message = "The password cannot be too short (min. 8 characters) and must contain letters and numbers."
+                });
+            }
+
+            if (PasswordHelper.CheckPassword(password.NewPassword, user.Password))
+            {
+                return new BadRequestObjectResult(new
+                {
+                    error = "SamePassword",
+                    message = "The new password can't be the same as old."
                 });
             }
 
@@ -129,7 +156,7 @@ namespace forum_backend.Services
             return new OkObjectResult(new { message = "Password successfully changed." });
         }
 
-        public async Task<IActionResult> UpdatePFP(UpdatePFPDTO pfp)
+        public async Task<IActionResult> UpdatePFP(UpdatePFPDTO pfp, int id)
         {
             var userIdFromToken = _httpContextAccessor.HttpContext?.User.FindFirst("UserID")?.Value;
 

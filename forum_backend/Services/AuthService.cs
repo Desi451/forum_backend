@@ -27,7 +27,7 @@ namespace forum_backend.Services
 
         public async Task<IActionResult> Register(RegisterDTO user)
         {
-            if (!ValidateEmail(user.EMail) || string.IsNullOrWhiteSpace(user.EMail))
+            if (!ValidationHelper.ValidateEmail(user.EMail) || string.IsNullOrWhiteSpace(user.EMail))
             {
                 return new BadRequestObjectResult(new
                 {
@@ -46,7 +46,7 @@ namespace forum_backend.Services
                 });
             }
 
-            if (!ValidateLoginOrNickname(user.Login) || string.IsNullOrWhiteSpace(user.Login))
+            if (!ValidationHelper.ValidateLoginOrNickname(user.Login) || string.IsNullOrWhiteSpace(user.Login))
             {
                 return new BadRequestObjectResult(new
                 {
@@ -55,7 +55,7 @@ namespace forum_backend.Services
                 });
             }
 
-            if (!ValidatePassword(user.Password) || string.IsNullOrWhiteSpace(user.Password))
+            if (!ValidationHelper.ValidatePassword(user.Password) || string.IsNullOrWhiteSpace(user.Password))
             {
                 return new BadRequestObjectResult(new
                 {
@@ -119,26 +119,6 @@ namespace forum_backend.Services
 
             var token = JWTGenerator(user);
             return new OkObjectResult(new { token });
-        }
-
-        private static bool ValidateEmail(string email)
-        {
-            return Regex.IsMatch(email,
-                @"^(?!\.)[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$",
-                RegexOptions.IgnoreCase, TimeSpan.FromMilliseconds(250));
-        }
-
-        private static bool ValidateLoginOrNickname(string login)
-        {
-            return Regex.IsMatch(login, "^[a-zA-Z0-9]{5,12}$");
-        }
-
-        private static bool ValidatePassword(string password)
-        {
-            return password.Length >= 8 &&
-                   password.Any(char.IsUpper) &&
-                   password.Any(char.IsDigit) &&
-                   password.Any(ch => !char.IsLetterOrDigit(ch));
         }
 
         private string JWTGenerator(Users user)
