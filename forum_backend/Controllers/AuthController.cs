@@ -8,22 +8,22 @@ namespace forum_backend.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly IAuthService _authorizationService;
-        public AuthController(IAuthService authorizationService)
+        private readonly IAuthService _authService;
+        public AuthController(IAuthService authService)
         {
-            _authorizationService = authorizationService;
+            _authService = authService;
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDTO user)
         {
-            return await _authorizationService.Register(user);
+            return await _authService.Register(user);
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDTO login)
         {
-            return await _authorizationService.Login(login);
+            return await _authService.Login(login);
         }
     }
 }

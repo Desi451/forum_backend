@@ -8,9 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace forum_backend.Services
 {
@@ -27,9 +25,11 @@ namespace forum_backend.Services
 
         public async Task<IActionResult> Register(RegisterDTO user)
         {
+            var errors = new List<object>();
+
             if (!ValidationHelper.ValidateEmail(user.EMail) || string.IsNullOrWhiteSpace(user.EMail))
             {
-                return new BadRequestObjectResult(new
+                errors.Add(new
                 {
                     error = "InvalidEmail",
                     message = "Invalid email address."
@@ -39,7 +39,7 @@ namespace forum_backend.Services
             if (await _context.Users.AnyAsync(x => x.EMail.Equals(user.EMail))
                 || await _context.Users.AnyAsync(x => x.Login.Equals(user.Login)))
             {
-                return new BadRequestObjectResult(new
+                errors.Add(new
                 {
                     error = "EmailOrLoginAlreadyExist",
                     message = "User with the login name or email address you are using already exists."
@@ -48,7 +48,7 @@ namespace forum_backend.Services
 
             if (!ValidationHelper.ValidateLoginOrNickname(user.Login) || string.IsNullOrWhiteSpace(user.Login))
             {
-                return new BadRequestObjectResult(new
+                errors.Add(new
                 {
                     error = "InvalidLogin",
                     message = "Your login must be between 5 and 12 characters long and can only consist of letters and numbers."
@@ -57,11 +57,16 @@ namespace forum_backend.Services
 
             if (!ValidationHelper.ValidatePassword(user.Password) || string.IsNullOrWhiteSpace(user.Password))
             {
-                return new BadRequestObjectResult(new
+                errors.Add(new
                 {
                     error = "InvalidPassword",
                     message = "The password cannot be too short (min. 8 characters) and must contain letters and numbers."
                 });
+            }
+
+            if (errors.Any())
+            {
+                return new BadRequestObjectResult(errors);
             }
 
             user.Password = PasswordHelper.HashPassword(user.Password);
@@ -97,11 +102,12 @@ namespace forum_backend.Services
 
         public async Task<IActionResult> Login(LoginDTO login)
         {
+            var errors = new List<object>();
             var user = await _context.Users.FirstOrDefaultAsync(x => x.EMail.Equals(login.LoginOrEMail) || x.Login.Equals(login.LoginOrEMail));
 
             if (user == null)
             {
-                return new BadRequestObjectResult(new
+                errors.Add(new
                 {
                     error = "IncorrectLoginOrEmail",
                     message = "Incorrect email or login."
@@ -110,11 +116,16 @@ namespace forum_backend.Services
 
             if (!PasswordHelper.CheckPassword(login.Password, user.Password))
             {
-                return new BadRequestObjectResult(new
+                errors.Add(new
                 {
                     error = "IncorrectPasssword",
                     message = "Incorrect password."
                 });
+            }
+
+            if (errors.Any())
+            {
+                return new BadRequestObjectResult(errors);
             }
 
             var token = JWTGenerator(user);

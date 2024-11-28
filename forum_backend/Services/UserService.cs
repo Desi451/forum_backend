@@ -2,7 +2,6 @@
 using forum_backend.DTOs;
 using forum_backend.Interfaces;
 using forum_backend.Utilities;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
