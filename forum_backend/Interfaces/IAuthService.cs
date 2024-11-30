@@ -7,5 +7,6 @@ namespace forum_backend.Interfaces
     {
         Task<IActionResult> Register(RegisterDTO user);
         Task<IActionResult> Login(LoginDTO login);
+        Task<IActionResult> RefreshToken();
     }
 }

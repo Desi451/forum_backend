@@ -16,11 +16,13 @@ namespace forum_backend.Services
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public AuthService(AppDbContext context, IConfiguration configuration)
+        public AuthService(AppDbContext context, IConfiguration configuration, IHttpContextAccessor httpContextAccessor)
         {
             _context = context;
             _configuration = configuration;
+            _httpContextAccessor = httpContextAccessor;
         }
 
         public async Task<IActionResult> Register(RegisterDTO user)
@@ -103,6 +105,7 @@ namespace forum_backend.Services
         public async Task<IActionResult> Login(LoginDTO login)
         {
             var errors = new List<object>();
+            string tempPassword;
             var user = await _context.Users.FirstOrDefaultAsync(x => x.EMail.Equals(login.LoginOrEMail) || x.Login.Equals(login.LoginOrEMail));
 
             if (user == null)
@@ -112,9 +115,14 @@ namespace forum_backend.Services
                     error = "IncorrectLoginOrEmail",
                     message = "Incorrect email or login."
                 });
+                tempPassword = " ";
+            }
+            else
+            {
+                tempPassword = user.Password;
             }
 
-            if (!PasswordHelper.CheckPassword(login.Password, user.Password))
+            if (!PasswordHelper.CheckPassword(login.Password, tempPassword))
             {
                 errors.Add(new
                 {
@@ -123,12 +131,50 @@ namespace forum_backend.Services
                 });
             }
 
-            if (errors.Any())
+            if (errors.Any() || user == null)
             {
                 return new BadRequestObjectResult(errors);
             }
 
             var token = JWTGenerator(user);
+            return new OkObjectResult(new { token });
+        }
+
+        public async Task<IActionResult> RefreshToken()
+        {
+            var userIdFromToken = _httpContextAccessor.HttpContext?.User.FindFirst("UserID")?.Value;
+
+            if (userIdFromToken == null)
+            {
+                return new BadRequestObjectResult(new
+                {
+                    error = "UserNotLogged",
+                    message = "You aren't logged in."
+                });
+            }
+
+            if (!int.TryParse(userIdFromToken, out var userId))
+            {
+                return new BadRequestObjectResult(new
+                {
+                    error = "InvalidUserID",
+                    message = "Invalid user ID in token."
+                });
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == userId);
+
+            if (user == null)
+            {
+                return new BadRequestObjectResult(new
+                {
+                    error = "UserNotFound",
+                    message = "User not found."
+                });
+            }
+
+            var token = JWTGenerator(user);
+
             return new OkObjectResult(new { token });
         }
 

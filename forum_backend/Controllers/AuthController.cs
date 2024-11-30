@@ -25,5 +25,11 @@ namespace forum_backend.Controllers
         {
             return await _authService.Login(login);
         }
+
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken()
+        {
+            return await _authService.RefreshToken();
+        }
     }
 }
