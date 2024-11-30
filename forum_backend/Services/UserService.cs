@@ -92,7 +92,7 @@ namespace forum_backend.Services
                 });
             }
 
-            user.Login = email.NewEMail;
+            user.EMail = email.NewEMail;
             await _context.SaveChangesAsync();
 
             return new OkObjectResult(new { message = "Login successfully changed." });
@@ -198,6 +198,40 @@ namespace forum_backend.Services
                 error = "InvalidData",
                 message = "No profile picture data provided."
             });
+        }
+
+        public async Task<IActionResult> GetUser(string login)
+        {
+            var user = await _context.Users.Include(u => u.UserThreads).FirstOrDefaultAsync(u => u.Login == login);
+
+            if (user == null)
+            {
+                return new BadRequestObjectResult(new
+                {
+                    error = "UserNotFound",
+                    message = "User not found."
+                });
+            }
+
+            var likesSum = 0;
+            if (user.UserThreads != null)
+            {
+                likesSum = await _context.Likes.Where(l => user.UserThreads.Select(t => t.Id).Contains(l.ThreadId)).SumAsync(l => l.LikeOrDislike);
+            }
+
+            var userDto = new GetUserDTO
+            {
+                Nickname = user.Nickname,
+                Login = user.Login,
+                CreationDate = user.CreationDate,
+                ProfilePicture = user.ProfilePicture,
+                Role = user.Role,
+                Status = user.status,
+                NoOfThreads = user.UserThreads?.Count ?? 0,
+                Likes = likesSum
+            };
+
+            return new OkObjectResult(userDto);
         }
     }
 }

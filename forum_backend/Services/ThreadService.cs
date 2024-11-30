@@ -163,5 +163,10 @@ namespace forum_backend.Services
 
             return new OkObjectResult(new { message = "Thread created successfully." });
         }
+
+        /*public async Task<IActionResult> GetUserThreads(string login)
+        {
+
+        }*/
     }
 }

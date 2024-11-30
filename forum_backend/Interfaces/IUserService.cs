@@ -9,5 +9,6 @@ namespace forum_backend.Interfaces
         Task<IActionResult> UpdateEMail(UpdateEMailDTO email, int id);
         Task<IActionResult> UpdatePassword(UpdatePasswordDTO password, int id);
         Task<IActionResult> UpdatePFP(UpdatePFPDTO pfp, int id);
+        Task<IActionResult> GetUser(string login);
     }
 }

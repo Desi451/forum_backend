@@ -19,5 +19,11 @@ namespace forum_backend.Controllers
         {
             return await _threadService.CreateThread(thread);
         }
+
+        /*[HttpGet("{login}/threads")]
+        public async Task<IActionResult> GetUserThreads([FromRoute] string login)
+        {
+            return await _threadService.GetUserThreads(login);
+        }*/
     }
 }

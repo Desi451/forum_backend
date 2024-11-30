@@ -37,5 +37,11 @@ namespace forum_backend.Controllers
         {
             return await _userService.UpdatePFP(pfp, id);
         }
+
+        [HttpGet("{login}")]
+        public async Task<IActionResult> GetUser([FromRoute] string login)
+        {
+            return await _userService.GetUser(login);
+        }
     }
 }
