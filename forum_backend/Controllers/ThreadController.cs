@@ -14,6 +14,11 @@ namespace forum_backend.Controllers
             _threadService = threadService;
         }
 
+        /// <summary>
+        /// Creates a new thread and adds it to the database
+        /// </summary>
+        /// <param name="thread">Thread DTO</param>
+        /// <returns>Success or error message</returns>
         [HttpPost("create-thread")]
         public async Task<IActionResult> CreateThread([FromBody] CreateThreadDTO thread)
         {
