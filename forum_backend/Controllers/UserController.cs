@@ -33,9 +33,15 @@ namespace forum_backend.Controllers
         }
 
         [HttpPatch("update-pfp/{id}")]
-        public async Task<IActionResult> UpdatePFP([FromBody] UpdatePFPDTO pfp, [FromRoute] int id)
+        public async Task<IActionResult> AddOrUpdatePFP([FromRoute] int id, [FromForm] IFormFile profilePicture)
         {
-            return await _userService.UpdatePFP(pfp, id);
+            return await _userService.AddOrUpdatePFP(profilePicture, id);
+        }
+
+        [HttpDelete("delete-pfp/{id}")]
+        public async Task<IActionResult> DeletePFP([FromRoute] int id)
+        {
+            return await _userService.DeletePFP(id);
         }
 
         [HttpGet("{login}")]

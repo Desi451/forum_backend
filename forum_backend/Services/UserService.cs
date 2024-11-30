@@ -155,7 +155,7 @@ namespace forum_backend.Services
             return new OkObjectResult(new { message = "Password successfully changed." });
         }
 
-        public async Task<IActionResult> UpdatePFP(UpdatePFPDTO pfp, int id)
+        public async Task<IActionResult> AddOrUpdatePFP(IFormFile pfp, int id)
         {
             var userIdFromToken = _httpContextAccessor.HttpContext?.User.FindFirst("UserID")?.Value;
 
@@ -179,25 +179,74 @@ namespace forum_backend.Services
                 });
             }
 
-            if (pfp.RemoveProfilePicture)
+            if (pfp == null || pfp.Length == 0)
             {
-                user.ProfilePicture = null;
-                await _context.SaveChangesAsync();
-                return new OkObjectResult(new { message = "Profile picture successfully removed." });
+                return new BadRequestObjectResult(new
+                {
+                    error = "InvalidData",
+                    message = "No profile picture file provided."
+                });
             }
 
-            if (!string.IsNullOrEmpty(pfp.NewProfilePicture))
+            var fileExtension = Path.GetExtension(pfp.FileName);
+            var fileName = $"{id}{fileExtension}";
+            var filePath = Path.Combine("Images", "Users", fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
             {
-                user.ProfilePicture = pfp.NewProfilePicture;
-                await _context.SaveChangesAsync();
-                return new OkObjectResult(new { message = "Profile picture successfully changed." });
+                await pfp.CopyToAsync(stream);
             }
 
-            return new BadRequestObjectResult(new
+            user.ProfilePicture = filePath;
+            await _context.SaveChangesAsync();
+
+            return new OkObjectResult(new { message = "Profile picture successfully changed." });
+        }
+
+        public async Task<IActionResult> DeletePFP(int id)
+        {
+            var userIdFromToken = _httpContextAccessor.HttpContext?.User.FindFirst("UserID")?.Value;
+
+            if (userIdFromToken == null)
             {
-                error = "InvalidData",
-                message = "No profile picture data provided."
-            });
+                return new BadRequestObjectResult(new
+                {
+                    error = "UserNotLogged",
+                    message = "You aren't logged in."
+                });
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.Id.ToString().Equals(userIdFromToken));
+
+            if (user == null)
+            {
+                return new BadRequestObjectResult(new
+                {
+                    error = "UserNotFound",
+                    message = "User not found."
+                });
+            }
+
+            if (string.IsNullOrEmpty(user.ProfilePicture))
+            {
+                return new BadRequestObjectResult(new
+                {
+                    error = "NoProfilePicture",
+                    message = "User doesn't have a profile picture."
+                });
+            }
+
+            var filePath = user.ProfilePicture;
+
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+            }
+
+            user.ProfilePicture = null;
+            await _context.SaveChangesAsync();
+
+            return new OkObjectResult(new { message = "Profile picture successfully deleted." });
         }
 
         public async Task<IActionResult> GetUser(string login)
