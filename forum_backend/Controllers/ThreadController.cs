@@ -25,10 +25,10 @@ namespace forum_backend.Controllers
             return await _threadService.CreateThread(thread);
         }
 
-        /*[HttpGet("{login}/threads")]
-        public async Task<IActionResult> GetUserThreads([FromRoute] string login)
+        [HttpGet("threads")]
+        public async Task<IActionResult> GetThreads([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 15)
         {
-            return await _threadService.GetUserThreads(login);
-        }*/
+            return await _threadService.GetThreads(pageNumber, pageSize);
+        }
     }
 }

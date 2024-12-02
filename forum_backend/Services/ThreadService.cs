@@ -164,9 +164,48 @@ namespace forum_backend.Services
             return new OkObjectResult(new { message = "Thread created successfully." });
         }
 
-        /*public async Task<IActionResult> GetUserThreads(string login)
+        public async Task<IActionResult> GetThreads(int pageNumber, int pageSize)
         {
+            if (pageNumber <= 0 || pageSize <= 0)
+            {
+                return new BadRequestObjectResult("Page number and size must be greater than zero.");
+            }
 
-        }*/
+            var threadsQuery = _context.Threads
+                .Include(t => t.Author)
+                .Include(t => t.ThreadTags!.ToList())
+                    .ThenInclude(tt => tt.Tag)
+                .Include(t => t.ThreadImages)
+                .Where(t => !t.Deleted)
+                .OrderByDescending(t => t.CreationDate);
+
+            var totalCount = await threadsQuery.CountAsync();
+
+            var threads = await threadsQuery
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var threadDTOs = threads.Select(t => new GetThreadsDTO
+            {
+                ThreadId = t.Id,
+                Title = t.Title,
+                AuthorId = t.AuthorId,
+                Author = t.Author.Nickname,
+                Description = t.Description,
+                CreationDate = t.CreationDate,
+                Tags = t.ThreadTags != null && t.ThreadTags.Any() ? t.ThreadTags.Select(tt => tt.Tag.Tag).ToList() : null,
+                Image = t.ThreadImages != null && t.ThreadImages.Any() ? t.ThreadImages.FirstOrDefault()?.Image : null
+            }).ToList();
+
+            return new OkObjectResult(new
+            {
+                Data = threadDTOs,
+                TotalCount = totalCount,
+                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize),
+                CurrentPage = pageNumber,
+                PageSize = pageSize
+            });
+        }
     }
 }

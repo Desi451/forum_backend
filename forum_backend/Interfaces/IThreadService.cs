@@ -6,6 +6,6 @@ namespace forum_backend.Interfaces
     public interface IThreadService
     {
         Task<IActionResult> CreateThread(CreateThreadDTO thread);
-        //Task<IActionResult> GetUserThreads(string login);
+        Task<IActionResult> GetThreads(int pageNumber, int pageSize);
     }
 }
