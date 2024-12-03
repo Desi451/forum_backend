@@ -25,10 +25,29 @@ namespace forum_backend.Controllers
             return await _threadService.CreateThread(thread);
         }
 
-        /*[HttpGet("{login}/threads")]
-        public async Task<IActionResult> GetUserThreads([FromRoute] string login)
+        /// <summary>
+        /// Gets max 15 threads from database
+        /// </summary>
+        /// <param name="pageNumber">Page number</param>
+        /// <param name="pageSize">Number of threads in page</param>
+        /// <returns>List of threads</returns>
+        [HttpGet("threads")]
+        public async Task<IActionResult> GetThreads([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 15)
         {
-            return await _threadService.GetUserThreads(login);
-        }*/
+            return await _threadService.GetThreads(pageNumber, pageSize);
+        }
+
+        /// <summary>
+        /// Searches for threads based on a given word (max 15)
+        /// </summary>
+        /// <param name="keyWord">Key word</param>
+        /// <param name="pageNumber">Page number</param>
+        /// <param name="pageSize">Number of threads in page</param>
+        /// <returns>List of threads</returns>
+        [HttpGet("search")]
+        public async Task<IActionResult> SearchThread([FromQuery] string keyWord, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 15)
+        {
+            return await _threadService.SearchThread(keyWord, pageNumber, pageSize);
+        }
     }
 }
