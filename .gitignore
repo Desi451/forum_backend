@@ -362,3 +362,4 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /forum_backend/appsettings.json
+/forum_backend/Images/Threads/1

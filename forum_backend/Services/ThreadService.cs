@@ -19,16 +19,17 @@ namespace forum_backend.Services
 
         public async Task<IActionResult> CreateThread(CreateThreadDTO thread)
         {
-            var userIdFromToken = _httpContextAccessor.HttpContext?.User.FindFirst("UserID")?.Value;
+            //Need 2 check session
+            //var userIdFromToken = _httpContextAccessor.HttpContext?.User.FindFirst("UserID")?.Value;
 
-            if (userIdFromToken == null)
-            {
-                return new BadRequestObjectResult(new
-                {
-                    error = "UserNotLogged",
-                    message = "You aren't logged in."
-                });
-            }
+            //if (userIdFromToken == null)
+            //{
+            //    return new BadRequestObjectResult(new
+            //    {
+            //        error = "UserNotLogged",
+            //        message = "You aren't logged in."
+            //    });
+            //}
 
             var errors = new List<object>();
 
@@ -103,7 +104,7 @@ namespace forum_backend.Services
             {
                 Title = thread.Title,
                 Description = thread.Description,
-                AuthorId = int.Parse(userIdFromToken),
+                AuthorId = thread.userId,
                 CreationDate = DateTimeOffset.Now,
                 Deleted = false
             };
