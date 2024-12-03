@@ -166,11 +166,6 @@ namespace forum_backend.Services
 
         public async Task<IActionResult> GetThreads(int pageNumber, int pageSize)
         {
-            if (pageNumber <= 0 || pageSize <= 0)
-            {
-                return new BadRequestObjectResult("Page number and size must be greater than zero.");
-            }
-
             var threadsQuery = _context.Threads
                 .Include(t => t.Author)
                 .Include(t => t.ThreadTags!.ToList())
@@ -179,9 +174,34 @@ namespace forum_backend.Services
                 .Where(t => !t.Deleted)
                 .OrderByDescending(t => t.CreationDate);
 
-            var totalCount = await threadsQuery.CountAsync();
+            return await GetPaginatedThreads(threadsQuery, pageNumber, pageSize);
+        }
 
-            var threads = await threadsQuery
+        public async Task<IActionResult> SearchThread(string keyWord, int pageNumber, int pageSize)
+        {
+            var threadsQuery = _context.Threads
+                .Include(t => t.Author)
+                .Include(t => t.ThreadTags!.ToList())
+                    .ThenInclude(tt => tt.Tag)
+                .Include(t => t.ThreadImages)
+                .Where(t => !t.Deleted &&
+                    (t.Title.Contains(keyWord) ||
+                    t.ThreadTags!.Any(tt => tt.Tag.Tag.Contains(keyWord))))
+                .OrderByDescending(t => t.CreationDate);
+
+            return await GetPaginatedThreads(threadsQuery, pageNumber, pageSize);
+        }
+
+        private async Task<IActionResult> GetPaginatedThreads(IQueryable<Threads> query, int pageNumber, int pageSize)
+        {
+            if (pageNumber <= 0 || pageSize <= 0)
+            {
+                return new BadRequestObjectResult("Page number and size must be greater than zero.");
+            }
+
+            var totalCount = await query.CountAsync();
+
+            var threads = await query
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
