@@ -2,7 +2,7 @@
 {
     public class UpdateEMailDTO
     {
-        public int UserId { get; set; }
+        public int Id { get; set; }
         public string NewEMail { get; set; } = null!;
         public string Password { get; set; } = null!;
     }

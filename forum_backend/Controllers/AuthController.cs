@@ -40,7 +40,7 @@ namespace forum_backend.Controllers
         /// Refreshes Token
         /// </summary>
         /// <returns>Error message or new Token</returns>
-        [HttpPost("refresh-token")]
+        [HttpGet("refresh-token")]
         public async Task<IActionResult> RefreshToken()
         {
             return await _authService.RefreshToken();

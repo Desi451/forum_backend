@@ -17,7 +17,7 @@ namespace forum_backend.Services
             _httpContextAccessor = httpContextAccessor;
         }
 
-        public async Task<IActionResult> UpdateNickname(UpdateNicknameDTO nickname, int id)
+        public async Task<IActionResult> UpdateNickname(UpdateNicknameDTO nickname)
         {
             var userIdFromToken = _httpContextAccessor.HttpContext?.User.FindFirst("UserID")?.Value;
 
@@ -42,13 +42,13 @@ namespace forum_backend.Services
                 });
             }
 
-            user.Nickname = nickname.NewNickname;
+            user.Nickname = nickname.Nickname;
             await _context.SaveChangesAsync();
 
             return new OkObjectResult(new { message = "Nickname successfully changed." });
         }
 
-        public async Task<IActionResult> UpdateEMail(UpdateEMailDTO email, int id)
+        public async Task<IActionResult> UpdateEMail(UpdateEMailDTO email)
         {
             var userIdFromToken = _httpContextAccessor.HttpContext?.User.FindFirst("UserID")?.Value;
 
@@ -98,7 +98,7 @@ namespace forum_backend.Services
             return new OkObjectResult(new { message = "Login successfully changed." });
         }
 
-        public async Task<IActionResult> UpdatePassword(UpdatePasswordDTO password, int id)
+        public async Task<IActionResult> UpdatePassword(UpdatePasswordDTO password)
         {
             var userIdFromToken = _httpContextAccessor.HttpContext?.User.FindFirst("UserID")?.Value;
 
@@ -127,7 +127,7 @@ namespace forum_backend.Services
                 return new BadRequestObjectResult(new
                 {
                     error = "InvalidPassword",
-                    message = "The password cannot be too short (min. 8 characters) and must contain letters and numbers."
+                    message = "The password cannot be too short (min. 8 characters) and must contain letters, numbers & special characters."
                 });
             }
 
@@ -186,6 +186,13 @@ namespace forum_backend.Services
                     error = "InvalidData",
                     message = "No profile picture file provided."
                 });
+            }
+
+            var directoryPath = Path.Combine("Images", "Users");
+
+            if (!Directory.Exists(directoryPath))
+            {
+                Directory.CreateDirectory(directoryPath);
             }
 
             var fileExtension = Path.GetExtension(pfp.FileName);
@@ -249,9 +256,9 @@ namespace forum_backend.Services
             return new OkObjectResult(new { message = "Profile picture successfully deleted." });
         }
 
-        public async Task<IActionResult> GetUser(string login)
+        public async Task<IActionResult> GetUser(int id)
         {
-            var user = await _context.Users.Include(u => u.UserThreads).FirstOrDefaultAsync(u => u.Login == login);
+            var user = await _context.Users.Include(u => u.UserThreads).FirstOrDefaultAsync(u => u.Id == id);
 
             if (user == null)
             {
@@ -270,11 +277,13 @@ namespace forum_backend.Services
 
             var userDto = new GetUserDTO
             {
+                Id = user.Id,
                 Nickname = user.Nickname,
                 Login = user.Login,
                 CreationDate = user.CreationDate,
                 ProfilePicture = user.ProfilePicture,
                 Role = user.Role,
+                Mail = user.EMail,
                 Status = user.status,
                 NoOfThreads = user.UserThreads?.Count ?? 0,
                 Likes = likesSum

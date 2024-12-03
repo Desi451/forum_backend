@@ -23,7 +23,8 @@ namespace forum_backend.Controllers
         [HttpPatch("update-nickname/{id}")]
         public async Task<IActionResult> UpdateNickname([FromBody] UpdateNicknameDTO nickname, [FromRoute] int id)
         {
-            return await _userService.UpdateNickname(nickname, id);
+            nickname.Id = id;
+            return await _userService.UpdateNickname(nickname);
         }
 
         /// <summary>
@@ -35,7 +36,8 @@ namespace forum_backend.Controllers
         [HttpPatch("update-email/{id}")]
         public async Task<IActionResult> UpdateEMail([FromBody] UpdateEMailDTO email, [FromRoute] int id)
         {
-            return await _userService.UpdateEMail(email, id);
+            email.Id = id;
+            return await _userService.UpdateEMail(email);
         }
 
         /// <summary>
@@ -47,7 +49,8 @@ namespace forum_backend.Controllers
         [HttpPatch("update-password/{id}")]
         public async Task<IActionResult> UpdatePassword([FromBody] UpdatePasswordDTO password, [FromRoute] int id)
         {
-            return await _userService.UpdatePassword(password, id);
+            password.Id = id;
+            return await _userService.UpdatePassword(password);
         }
 
         /// <summary>
@@ -76,12 +79,12 @@ namespace forum_backend.Controllers
         /// <summary>
         /// Gets data for a specific user
         /// </summary>
-        /// <param name="login">User login</param>
+        /// <param name="id">User id</param>
         /// <returns>GetUserDTO with data</returns>
-        [HttpGet("{login}")]
-        public async Task<IActionResult> GetUser([FromRoute] string login)
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetUser([FromRoute] int id)
         {
-            return await _userService.GetUser(login);
+            return await _userService.GetUser(id);
         }
     }
 }

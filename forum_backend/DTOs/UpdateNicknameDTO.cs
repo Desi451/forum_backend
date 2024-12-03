@@ -2,7 +2,7 @@
 {
     public class UpdateNicknameDTO
     {
-        public int UserId { get; set; }
-        public string NewNickname { get; set; } = null!;
+        public int Id { get; set; }
+        public string Nickname { get; set; } = null!;
     }
 }
