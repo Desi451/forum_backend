@@ -11,5 +11,6 @@ namespace forum_backend.Interfaces
         Task<IActionResult> AddOrUpdatePFP(IFormFile pfp, int id);
         Task<IActionResult> DeletePFP(int id);
         Task<IActionResult> GetUser(int id);
+        Task<IActionResult> GetUserProfilePicture(int id);
     }
 }

@@ -86,5 +86,16 @@ namespace forum_backend.Controllers
         {
             return await _userService.GetUser(id);
         }
+
+        /// <summary>
+        /// Gets user profile-picture
+        /// </summary>
+        /// <param name="id">User id</param>
+        /// <returns>File or null</returns>
+        [HttpGet("{id}/profile-picture")]
+        public async Task<IActionResult> GetUserProfilePicture([FromRoute] int id)
+        {
+            return await _userService.GetUserProfilePicture(id);
+        }
     }
 }

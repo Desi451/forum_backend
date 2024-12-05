@@ -291,5 +291,41 @@ namespace forum_backend.Services
 
             return new OkObjectResult(userDto);
         }
+
+        public async Task<IActionResult> GetUserProfilePicture(int id)
+        {
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+
+            if (user == null)
+            {
+                return new BadRequestObjectResult(new
+                {
+                    error = "UserNotFound",
+                    message = "User not found."
+                });
+            }
+
+            var filePath = user.ProfilePicture;
+
+            if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
+            {
+                return new OkObjectResult(new
+                {
+                    profilePicture = (string?)null
+                });
+            }
+
+            var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+            var fileExtension = Path.GetExtension(filePath).ToLower();
+            var contentType = fileExtension switch
+            {
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".png" => "image/png",
+                ".gif" => "image/gif",
+                _ => "application/octet-stream"
+            };
+
+            return new FileStreamResult(fileStream, contentType);
+        }
     }
 }
