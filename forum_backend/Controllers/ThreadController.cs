@@ -37,6 +37,12 @@ namespace forum_backend.Controllers
             return await _threadService.GetThreads(pageNumber, pageSize);
         }
 
+        [HttpGet("thread/{id}")]
+        public async Task<IActionResult> GetThreadAndSubthreads([FromRoute] int id)
+        {
+            return await _threadService.GetThreadAndSubthreads(id);
+        }
+
         /// <summary>
         /// Searches for threads based on a given word (max 15)
         /// </summary>

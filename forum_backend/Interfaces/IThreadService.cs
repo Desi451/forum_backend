@@ -7,6 +7,7 @@ namespace forum_backend.Interfaces
     {
         Task<IActionResult> CreateThread(CreateThreadDTO thread);
         Task<IActionResult> GetThreads(int pageNumber, int pageSize);
+        Task<IActionResult> GetThreadAndSubthreads(int id);
         Task<IActionResult> SearchThread(string keyWord, int pageNumber, int pageSize);
     }
 }

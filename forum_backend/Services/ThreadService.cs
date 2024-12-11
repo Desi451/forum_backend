@@ -19,17 +19,16 @@ namespace forum_backend.Services
 
         public async Task<IActionResult> CreateThread(CreateThreadDTO thread)
         {
-            //Need 2 check session
-            //var userIdFromToken = _httpContextAccessor.HttpContext?.User.FindFirst("UserID")?.Value;
+            var userIdFromToken = _httpContextAccessor.HttpContext?.User.FindFirst("UserID")?.Value;
 
-            //if (userIdFromToken == null)
-            //{
-            //    return new BadRequestObjectResult(new
-            //    {
-            //        error = "UserNotLogged",
-            //        message = "You aren't logged in."
-            //    });
-            //}
+            if (userIdFromToken == null)
+            {
+                return new BadRequestObjectResult(new
+                {
+                    error = "UserNotLogged",
+                    message = "You aren't logged in."
+                });
+            }
 
             var errors = new List<object>();
 
@@ -178,6 +177,36 @@ namespace forum_backend.Services
             return await GetPaginatedThreads(threadsQuery, pageNumber, pageSize);
         }
 
+        public async Task<IActionResult> GetThreadAndSubthreads(int id)
+        {
+            var mainThread = await _context.Threads
+                .Include(t => t.Author)
+                .Include(t => t.ThreadTags!.ToList())
+                    .ThenInclude(tt => tt.Tag)
+                .Include(t => t.ThreadImages)
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (mainThread == null || mainThread.Deleted)
+            {
+                return new NotFoundObjectResult(new
+                {
+                    error = "ThreadNotFound",
+                    message = "The requested thread does not exist or has been deleted."
+                });
+            }
+
+            var allThreads = await _context.Threads
+                .Include(st => st.Author)
+                .Include(st => st.ThreadTags!.ToList())
+                    .ThenInclude(tt => tt.Tag)
+                .Include(st => st.ThreadImages)
+                .ToListAsync();
+
+            var threadDTO = MapThreadToDTO(mainThread, allThreads);
+
+            return new OkObjectResult(threadDTO);
+        }
+
         public async Task<IActionResult> SearchThread(string keyWord, int pageNumber, int pageSize)
         {
             var threadsQuery = _context.Threads
@@ -191,6 +220,31 @@ namespace forum_backend.Services
                 .OrderByDescending(t => t.CreationDate);
 
             return await GetPaginatedThreads(threadsQuery, pageNumber, pageSize);
+        }
+
+        private GetThreadAndSubthreadsDTO MapThreadToDTO(Threads thread, List<Threads> allThreads)
+        {
+            var likesCount = _context.Likes.Count(l => l.ThreadId == thread.Id && l.LikeOrDislike > 0);
+            var dislikesCount = _context.Likes.Count(l => l.ThreadId == thread.Id && l.LikeOrDislike < 0);
+
+            return new GetThreadAndSubthreadsDTO
+            {
+                ThreadId = thread.Id,
+                Title = thread.Title,
+                Description = thread.Description,
+                AuthorNickname = thread.Author.Nickname,
+                AuthorProfilePicture = thread.Author.ProfilePicture,
+                CreationDate = thread.CreationDate,
+                Deleted = thread.Deleted,
+                Tags = thread.ThreadTags?.Select(tt => tt.Tag.Tag).ToList(),
+                Images = thread.ThreadImages?.Select(img => img.Image).ToList(),
+                Likes = likesCount - dislikesCount,
+                Subthreads = allThreads
+                    .Where(subthread => subthread.SupThreadId == thread.Id && !subthread.Deleted)
+                    .Select(subthread => MapThreadToDTO(subthread, allThreads))
+                    .OrderBy(subthread => subthread.Title)
+                    .ToList()
+            };
         }
 
         private async Task<IActionResult> GetPaginatedThreads(IQueryable<Threads> query, int pageNumber, int pageSize)
