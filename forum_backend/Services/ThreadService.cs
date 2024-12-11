@@ -184,7 +184,7 @@ namespace forum_backend.Services
                 .Include(t => t.ThreadTags!.ToList())
                     .ThenInclude(tt => tt.Tag)
                 .Include(t => t.ThreadImages)
-                .FirstOrDefaultAsync(t => t.Id == id);
+                .FirstOrDefaultAsync(t => t.Id == id && t.PrimeThreadId == null && t.SupThreadId == null);
 
             if (mainThread == null || mainThread.Deleted)
             {
