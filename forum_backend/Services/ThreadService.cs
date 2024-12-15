@@ -222,6 +222,42 @@ namespace forum_backend.Services
             return await GetPaginatedThreads(threadsQuery, pageNumber, pageSize);
         }
 
+        public async Task<IActionResult> GetThreadImage(int threadId, string filePath)
+        {
+            var thread = await _context.Threads.FirstOrDefaultAsync(t => t.Id == threadId);
+
+            if (thread == null || thread.Deleted)
+            {
+                return new NotFoundObjectResult(new
+                {
+                    error = "ThreadNotFound",
+                    message = "Thread not found or deleted."
+                });
+            }
+
+            var fileName = Path.Combine("Images", "Threads", threadId.ToString(), filePath);
+
+            if (string.IsNullOrEmpty(fileName) || !File.Exists(fileName))
+            {
+                return new OkObjectResult(new
+                {
+                    profilePicture = (string?)null
+                });
+            }
+
+            var fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
+            var fileExtension = Path.GetExtension(fileName).ToLower();
+            var contentType = fileExtension switch
+            {
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".png" => "image/png",
+                ".gif" => "image/gif",
+                _ => "application/octet-stream"
+            };
+
+            return new FileStreamResult(fileStream, contentType);
+        }
+
         private GetThreadAndSubthreadsDTO MapThreadToDTO(Threads thread, List<Threads> allThreads)
         {
             var likesCount = _context.Likes.Count(l => l.ThreadId == thread.Id && l.LikeOrDislike > 0);

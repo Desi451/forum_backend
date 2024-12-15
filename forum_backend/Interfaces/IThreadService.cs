@@ -9,5 +9,6 @@ namespace forum_backend.Interfaces
         Task<IActionResult> GetThreads(int pageNumber, int pageSize);
         Task<IActionResult> GetThreadAndSubthreads(int id);
         Task<IActionResult> SearchThread(string keyWord, int pageNumber, int pageSize);
+        Task<IActionResult> GetThreadImage(int threadId, string filePath);
     }
 }

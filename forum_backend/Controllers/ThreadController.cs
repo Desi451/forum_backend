@@ -55,5 +55,17 @@ namespace forum_backend.Controllers
         {
             return await _threadService.SearchThread(keyWord, pageNumber, pageSize);
         }
+
+        /// <summary>
+        /// Gets thread image
+        /// </summary>
+        /// <param name="threadId">Thread ID</param>
+        /// <param name="filePath"File path></param>
+        /// <returns>File or null</returns>
+        [HttpGet("threads/{threadId}/images/{filePath}")]
+        public async Task<IActionResult> GetThreadImage([FromQuery] int threadId, [FromQuery] string filePath)
+        {
+            return await _threadService.GetThreadImage(threadId, filePath);
+        }
     }
 }
