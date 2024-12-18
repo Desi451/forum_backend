@@ -164,6 +164,321 @@ namespace forum_backend.Services
             return new OkObjectResult(new { message = "Thread created successfully." });
         }
 
+        public async Task<IActionResult> EditThread(int threadId, EditThreadDTO editThreadDTO)
+        {
+            var userIdFromToken = _httpContextAccessor.HttpContext?.User.FindFirst("UserID")?.Value;
+
+            if (userIdFromToken == null)
+            {
+                return new BadRequestObjectResult(new
+                {
+                    error = "UserNotLogged",
+                    message = "You aren't logged in."
+                });
+            }
+
+            var thread = await _context.Threads
+                .Include(t => t.ThreadImages!)
+                .Include(t => t.ThreadTags!)
+                .ThenInclude(tt => tt.Tag)
+                .FirstOrDefaultAsync(t => t.Id == threadId);
+
+            if (thread == null || thread.Deleted)
+            {
+                return new NotFoundObjectResult(new
+                {
+                    error = "ThreadNotFound",
+                    message = "Thread not found or deleted."
+                });
+            }
+
+            if (thread.AuthorId.ToString() != userIdFromToken)
+            {
+                return new ForbidResult();
+            }
+
+            var errors = new List<object>();
+
+            if (thread.PrimeThreadId == null && thread.SupThreadId == null)
+            {
+                if (!string.IsNullOrWhiteSpace(editThreadDTO.Title) &&
+                    (editThreadDTO.Title.Length < 5 || editThreadDTO.Title.Length > 100))
+                {
+                    errors.Add(new
+                    {
+                        error = "InvalidTitle",
+                        message = "The title must be between 5 and 100 characters long."
+                    });
+                }
+            }
+            else
+            {
+                if (!string.IsNullOrEmpty(editThreadDTO.Title))
+                {
+                    errors.Add(new
+                    {
+                        error = "CannotEditTitle",
+                        message = "Title cannot be edited for sub-threads."
+                    });
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(editThreadDTO.Description) &&
+                (editThreadDTO.Description.Length < 10 || editThreadDTO.Description.Length > 1000))
+            {
+                errors.Add(new
+                {
+                    error = "InvalidDescription",
+                    message = "The description must be between 10 and 1000 characters long."
+                });
+            }
+
+            if (editThreadDTO.Tags != null && editThreadDTO.Tags.Count > 10)
+            {
+                errors.Add(new
+                {
+                    error = "TooManyTags",
+                    message = "You can only add up to 10 tags."
+                });
+            }
+
+            if (editThreadDTO.Images != null && editThreadDTO.Images.Count > 5)
+            {
+                errors.Add(new
+                {
+                    error = "TooManyImages",
+                    message = "You can only upload up to 5 images."
+                });
+            }
+
+            if (errors.Any())
+            {
+                return new BadRequestObjectResult(errors);
+            }
+
+            if (thread.PrimeThreadId == null && thread.SupThreadId == null && !string.IsNullOrWhiteSpace(editThreadDTO.Title))
+            {
+                thread.Title = editThreadDTO.Title;
+            }
+
+            if (!string.IsNullOrWhiteSpace(editThreadDTO.Description))
+            {
+                thread.Description = editThreadDTO.Description;
+            }
+
+            if (editThreadDTO.Tags != null)
+            {
+                var tagsToRemove = thread.ThreadTags?
+                    .Where(tt => !editThreadDTO.Tags.Contains(tt.Tag.Tag))
+                    .ToList();
+
+                if (tagsToRemove != null)
+                {
+                    foreach (var tagToRemove in tagsToRemove)
+                    {
+                        _context.ThreadTags.Remove(tagToRemove);
+                    }
+                }
+
+                foreach (var tagName in editThreadDTO.Tags.Distinct())
+                {
+                    var existingTag = await _context.Tags.FirstOrDefaultAsync(t => t.Tag == tagName);
+
+                    if (existingTag == null)
+                    {
+                        existingTag = new Tags { Tag = tagName };
+                        _context.Tags.Add(existingTag);
+                        await _context.SaveChangesAsync();
+                    }
+
+                    if (thread.ThreadTags != null && !thread.ThreadTags.Any(tt => tt.TagId == existingTag.Id))
+                    {
+                        thread.ThreadTags.Add(new ThreadTags
+                        {
+                            ThreadId = thread.Id,
+                            TagId = existingTag.Id
+                        });
+                    }
+                }
+            }
+
+            if (editThreadDTO.Images != null && editThreadDTO.Images.Any())
+            {
+                if (thread.ThreadImages != null)
+                {
+                    foreach (var oldImage in thread.ThreadImages)
+                    {
+                        var filePath = oldImage.Image;
+                        if (File.Exists(filePath))
+                        {
+                            File.Delete(filePath);
+                        }
+                        _context.Images.Remove(oldImage);
+                    }
+                }
+
+                var threadFolder = Path.Combine("Images", "Threads", thread.Id.ToString());
+                if (!Directory.Exists(threadFolder))
+                {
+                    Directory.CreateDirectory(threadFolder);
+                }
+
+                var newImages = new List<Images>();
+
+                foreach (var image in editThreadDTO.Images)
+                {
+                    var fileName = $"{Guid.NewGuid()}{Path.GetExtension(image.FileName)}";
+                    var filePath = Path.Combine(threadFolder, fileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await image.CopyToAsync(stream);
+                    }
+
+                    newImages.Add(new Images
+                    {
+                        ThreadId = thread.Id,
+                        Image = filePath
+                    });
+                }
+
+                _context.Images.AddRange(newImages);
+            }
+
+            await _context.SaveChangesAsync();
+
+            return new OkObjectResult(new { message = "Thread updated successfully." });
+        }
+
+        public async Task<IActionResult> CreateSubthread(int parentThreadId, CreateSubthreadDTO subthreadDTO)
+        {
+            var userIdFromToken = _httpContextAccessor.HttpContext?.User.FindFirst("UserID")?.Value;
+
+            if (string.IsNullOrEmpty(userIdFromToken) || !int.TryParse(userIdFromToken, out int userId))
+            {
+                return new BadRequestObjectResult(new
+                {
+                    error = "UserNotLogged",
+                    message = "You aren't logged in or your user ID is invalid."
+                });
+            }
+
+            var errors = new List<object>();
+
+            if (string.IsNullOrWhiteSpace(subthreadDTO.Description) || subthreadDTO.Description.Length < 10 || subthreadDTO.Description.Length > 1000)
+            {
+                errors.Add(new
+                {
+                    error = "InvalidDescription",
+                    message = "The description must be between 10 and 1000 characters long."
+                });
+            }
+
+            if (errors.Any())
+            {
+                return new BadRequestObjectResult(errors);
+            }
+
+            var parentThread = await _context.Threads
+                .Include(t => t.ThreadTags)
+                .FirstOrDefaultAsync(t => t.Id == parentThreadId && !t.Deleted);
+
+            if (parentThread == null)
+            {
+                return new NotFoundObjectResult(new
+                {
+                    error = "ParentThreadNotFound",
+                    message = "The parent thread does not exist or has been deleted."
+                });
+            }
+
+            int primeThreadId = parentThread.PrimeThreadId ?? parentThread.Id;
+
+            var newSubthread = new Threads
+            {
+                Title = parentThread.Title,
+                Description = subthreadDTO.Description,
+                AuthorId = userId,
+                CreationDate = DateTimeOffset.Now,
+                Deleted = false,
+                SupThreadId = parentThreadId,
+                PrimeThreadId = primeThreadId
+            };
+
+            _context.Threads.Add(newSubthread);
+            await _context.SaveChangesAsync();
+
+            if (parentThread.ThreadTags != null && parentThread.ThreadTags.Any())
+            {
+                var subthreadTags = parentThread.ThreadTags
+                    .Select(tt => new ThreadTags
+                    {
+                        ThreadId = newSubthread.Id,
+                        TagId = tt.TagId
+                    })
+                    .ToList();
+
+                _context.ThreadTags.AddRange(subthreadTags);
+            }
+
+            await _context.SaveChangesAsync();
+
+            return new OkObjectResult(new { message = "Subthread created successfully." });
+        }
+
+        public async Task<IActionResult> DeleteThread(int threadId)
+        {
+            var userIdFromToken = _httpContextAccessor.HttpContext?.User.FindFirst("UserID")?.Value;
+
+            if (string.IsNullOrEmpty(userIdFromToken) || !int.TryParse(userIdFromToken, out int userId))
+            {
+                return new BadRequestObjectResult(new
+                {
+                    error = "UserNotLogged",
+                    message = "You aren't logged in or your user ID is invalid."
+                });
+            }
+
+            var thread = await _context.Threads
+                .Include(t => t.ThreadTags)
+                .Include(t => t.ThreadImages)
+                .FirstOrDefaultAsync(t => t.Id == threadId);
+
+            if (thread == null)
+            {
+                return new NotFoundObjectResult(new
+                {
+                    error = "ThreadNotFound",
+                    message = "Thread not found."
+                });
+            }
+
+            if (thread.AuthorId != userId)
+            {
+                return new ForbidResult();
+            }
+
+            if (thread.PrimeThreadId == null && thread.SupThreadId == null)
+            {
+                var threadsToDelete = await _context.Threads
+                    .Where(t => t.PrimeThreadId == thread.Id || t.SupThreadId == thread.Id || t.Id == thread.Id)
+                    .ToListAsync();
+
+                foreach (var t in threadsToDelete)
+                {
+                    t.Deleted = true;
+                }
+            }
+            else
+            {
+                thread.Deleted = true;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return new OkObjectResult(new { message = "Thread deleted successfully." });
+        }
+
         public async Task<IActionResult> GetThreads(int pageNumber, int pageSize)
         {
             var threadsQuery = _context.Threads

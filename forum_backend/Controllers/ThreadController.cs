@@ -1,6 +1,7 @@
 ﻿using forum_backend.DTOs;
 using forum_backend.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using System.Formats.Asn1;
 
 namespace forum_backend.Controllers
 {
@@ -20,9 +21,28 @@ namespace forum_backend.Controllers
         /// <param name="thread">Thread DTO</param>
         /// <returns>Success or error message</returns>
         [HttpPost("create-thread")]
-        public async Task<IActionResult> CreateThread([FromForm] CreateThreadDTO thread)
+        public async Task<IActionResult> CreateThread([FromBody] CreateThreadDTO thread)
         {
             return await _threadService.CreateThread(thread);
+        }
+
+
+        [HttpPatch("edit-thread/{threadId}")]
+        public async Task<IActionResult> EditThread([FromRoute] int threadId, [FromBody] EditThreadDTO editThreadDTO)
+        {
+            return await _threadService.EditThread(threadId, editThreadDTO);
+        }
+
+        [HttpPost("create-subthread/{parentThreadId}")]
+        public async Task<IActionResult> CreateSubthread([FromRoute] int parentThreadId, [FromBody] CreateSubthreadDTO subthreadDTO)
+        {
+            return await _threadService.CreateSubthread(parentThreadId, subthreadDTO);
+        }
+
+        [HttpDelete("delete-thread/{threadId}")]
+        public async Task<IActionResult> DeleteThread([FromRoute] int threadId)
+        {
+            return await _threadService.DeleteThread(threadId);
         }
 
         /// <summary>
