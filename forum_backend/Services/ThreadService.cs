@@ -607,6 +607,56 @@ namespace forum_backend.Services
             return new OkObjectResult(new { message = "Your vote has been recorded." });
         }
 
+        public async Task<IActionResult> SubscribeThread(int threadId)
+        {
+            var userIdFromToken = _httpContextAccessor.HttpContext?.User.FindFirst("UserID")?.Value;
+
+            if (string.IsNullOrEmpty(userIdFromToken) || !int.TryParse(userIdFromToken, out int userId))
+            {
+                return new BadRequestObjectResult(new
+                {
+                    error = "UserNotLogged",
+                    message = "You aren't logged in or your user ID is invalid."
+                });
+            }
+
+            var thread = await _context.Threads.FirstOrDefaultAsync(t => t.Id == threadId && !t.Deleted);
+            if (thread == null || thread.PrimeThreadId != null || thread.SupThreadId != null)
+            {
+                return new BadRequestObjectResult(new
+                {
+                    error = "InvalidThread",
+                    message = "The specified thread does not exist or is not a main thread."
+                });
+            }
+
+            var subscription = await _context.Subscriptions.FirstOrDefaultAsync(s => s.UserId == userId && s.ThreadId == threadId);
+
+            if (subscription != null)
+            {
+                subscription.Subscribe = !subscription.Subscribe;
+                _context.Subscriptions.Update(subscription);
+                await _context.SaveChangesAsync();
+
+                return new OkObjectResult(new
+                {
+                    message = subscription.Subscribe ? "Subscribed successfully." : "Unsubscribed successfully."
+                });
+            }
+
+            var newSubscription = new Subscriptions
+            {
+                UserId = userId,
+                ThreadId = threadId,
+                Subscribe = true
+            };
+
+            _context.Subscriptions.Add(newSubscription);
+            await _context.SaveChangesAsync();
+
+            return new OkObjectResult(new { message = "Subscribed successfully." });
+        }
+
         public async Task<IActionResult> GetThreads(int pageNumber, int pageSize)
         {
             var threadsQuery = _context.Threads
@@ -618,6 +668,32 @@ namespace forum_backend.Services
                 .OrderByDescending(t => t.CreationDate);
 
             return await GetPaginatedThreads(threadsQuery, pageNumber, pageSize);
+        }
+
+        public async Task<IActionResult> GetSubscribedThreads(int pageNumber, int pageSize)
+        {
+            var userIdFromToken = _httpContextAccessor.HttpContext?.User.FindFirst("UserID")?.Value;
+
+            if (string.IsNullOrEmpty(userIdFromToken) || !int.TryParse(userIdFromToken, out int userId))
+            {
+                return new BadRequestObjectResult(new
+                {
+                    error = "UserNotLogged",
+                    message = "You aren't logged in or your user ID is invalid."
+                });
+            }
+
+            var subscribedThreadsQuery = _context.Subscriptions
+                .Where(s => s.UserId == userId && s.Subscribe)
+                .Select(s => s.Thread)
+                .Include(t => t.Author)
+                .Include(t => t.ThreadTags!.ToList())
+                    .ThenInclude(tt => tt.Tag)
+                .Include(t => t.ThreadImages)
+                .Where(t => !t.Deleted)
+                .OrderByDescending(t => t.CreationDate);
+
+            return await GetPaginatedThreads(subscribedThreadsQuery, pageNumber, pageSize);
         }
 
         public async Task<IActionResult> GetThreadAndSubthreads(int id)

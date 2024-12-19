@@ -10,7 +10,9 @@ namespace forum_backend.Interfaces
         Task<IActionResult> CreateSubthread(int parentThreadId, CreateSubthreadDTO subthreadDTO);
         Task<IActionResult> DeleteThread(int threadId);
         Task<IActionResult> LikeOrDislikeThread(int threadId, int likeOrDislike);
+        Task<IActionResult> SubscribeThread(int threadId);
         Task<IActionResult> GetThreads(int pageNumber, int pageSize);
+        Task<IActionResult> GetSubscribedThreads(int pageNumber, int pageSize);
         Task<IActionResult> GetThreadAndSubthreads(int id);
         Task<IActionResult> SearchThread(string keyWord, int pageNumber, int pageSize);
         Task<IActionResult> GetThreadImage(int threadId, string filePath);

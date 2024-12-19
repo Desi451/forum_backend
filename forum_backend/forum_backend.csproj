@@ -18,8 +18,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Images\Users\" />
     <Folder Include="Images\Threads\" />
+    <Folder Include="Images\Users\" />
   </ItemGroup>
 
 </Project>
