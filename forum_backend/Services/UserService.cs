@@ -292,7 +292,7 @@ namespace forum_backend.Services
             return new OkObjectResult(userDto);
         }
 
-        public async Task<IActionResult> GetUserProfilePicture(int id)
+        public async Task<IActionResult> GetUserProfilePictureUrl (int id)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
 
@@ -311,21 +311,18 @@ namespace forum_backend.Services
             {
                 return new OkObjectResult(new
                 {
-                    profilePicture = (string?)null
+                    profilePictureUrl = (string?)null
                 });
             }
 
-            var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-            var fileExtension = Path.GetExtension(filePath).ToLower();
-            var contentType = fileExtension switch
-            {
-                ".jpg" or ".jpeg" => "image/jpeg",
-                ".png" => "image/png",
-                ".gif" => "image/gif",
-                _ => "application/octet-stream"
-            };
+            var fileName = Path.GetFileName(filePath);
+            var forumBackendHostAddress = "http://localhost:5179";
+            var fileUrl = $"{forumBackendHostAddress}/images/users/{fileName}";
 
-            return new FileStreamResult(fileStream, contentType);
+            return new OkObjectResult(new
+            {
+                profilePictureUrl = fileUrl
+            });
         }
     }
 }

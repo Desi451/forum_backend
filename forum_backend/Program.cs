@@ -3,6 +3,7 @@ using forum_backend.Interfaces;
 using forum_backend.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -66,6 +67,14 @@ app.UseCors(builder => builder
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseStaticFiles();
+
+//TODO: same for threads
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), "Images", "Users")),
+    RequestPath = "/images/users"
+});
 app.MapControllers();
 
 app.Run();
