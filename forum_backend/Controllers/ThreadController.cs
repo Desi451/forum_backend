@@ -21,7 +21,7 @@ namespace forum_backend.Controllers
         /// <param name="thread">Thread DTO</param>
         /// <returns>Success or error message</returns>
         [HttpPost("create-thread")]
-        public async Task<IActionResult> CreateThread([FromBody] CreateThreadDTO thread)
+        public async Task<IActionResult> CreateThread([FromForm] CreateThreadDTO thread)
         {
             return await _threadService.CreateThread(thread);
         }
