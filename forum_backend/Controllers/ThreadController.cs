@@ -39,10 +39,16 @@ namespace forum_backend.Controllers
             return await _threadService.CreateSubthread(parentThreadId, subthreadDTO);
         }
 
-        [HttpDelete("delete-thread/{threadId}")]
+        [HttpPatch("delete-thread/{threadId}")]
         public async Task<IActionResult> DeleteThread([FromRoute] int threadId)
         {
             return await _threadService.DeleteThread(threadId);
+        }
+
+        [HttpPost("like-dislike/{threadId}")]
+        public async Task<IActionResult> LikeOrDislikeThread([FromRoute] int threadId, [FromBody] int likeOrDislike)
+        {
+            return await _threadService.LikeOrDislikeThread(threadId, likeOrDislike);
         }
 
         /// <summary>

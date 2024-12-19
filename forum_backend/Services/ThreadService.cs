@@ -4,6 +4,7 @@ using forum_backend.Entities;
 using forum_backend.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace forum_backend.Services
 {
@@ -374,6 +375,41 @@ namespace forum_backend.Services
                 });
             }
 
+            if (subthreadDTO.Images.Count > 5)
+            {
+                errors.Add(new
+                {
+                    error = "TooManyImages",
+                    message = "You can only upload up to 5 images."
+                });
+            }
+            else
+            {
+                foreach (var image in subthreadDTO.Images)
+                {
+                    if (image.Length > 5 * 1024 * 1024)
+                    {
+                        errors.Add(new
+                        {
+                            error = "FileTooLarge",
+                            message = $"The file '{image.FileName}' exceeds the size limit of 5 MB."
+                        });
+                    }
+
+                    var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif" };
+                    var extension = Path.GetExtension(image.FileName).ToLower();
+
+                    if (!allowedExtensions.Contains(extension))
+                    {
+                        errors.Add(new
+                        {
+                            error = "InvalidFileType",
+                            message = $"The file '{image.FileName}' has an unsupported extension. Allowed: {string.Join(", ", allowedExtensions)}"
+                        });
+                    }
+                }
+            }
+
             if (errors.Any())
             {
                 return new BadRequestObjectResult(errors);
@@ -407,6 +443,33 @@ namespace forum_backend.Services
 
             _context.Threads.Add(newSubthread);
             await _context.SaveChangesAsync();
+
+            var subthreadFolder = Path.Combine("Images", "Threads", newSubthread.Id.ToString());
+            if (!Directory.Exists(subthreadFolder))
+            {
+                Directory.CreateDirectory(subthreadFolder);
+            }
+
+            var subthreadImages = new List<Images>();
+
+            foreach (var image in subthreadDTO.Images)
+            {
+                var fileName = $"{Guid.NewGuid()}{Path.GetExtension(image.FileName)}";
+                var filePath = Path.Combine(subthreadFolder, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await image.CopyToAsync(stream);
+                }
+
+                subthreadImages.Add(new Images
+                {
+                    ThreadId = newSubthread.Id,
+                    Image = filePath
+                });
+            }
+
+            _context.Images.AddRange(subthreadImages);
 
             if (parentThread.ThreadTags != null && parentThread.ThreadTags.Any())
             {
@@ -477,6 +540,71 @@ namespace forum_backend.Services
             await _context.SaveChangesAsync();
 
             return new OkObjectResult(new { message = "Thread deleted successfully." });
+        }
+
+        public async Task<IActionResult> LikeOrDislikeThread(int threadId, int likeOrDislike)
+        {
+            var userIdFromToken = _httpContextAccessor.HttpContext?.User.FindFirst("UserID")?.Value;
+
+            if (string.IsNullOrEmpty(userIdFromToken) || !int.TryParse(userIdFromToken, out int userId))
+            {
+                return new BadRequestObjectResult(new
+                {
+                    error = "UserNotLogged",
+                    message = "You aren't logged in or your user ID is invalid."
+                });
+            }
+
+            if (likeOrDislike != 1 && likeOrDislike != -1)
+            {
+                return new BadRequestObjectResult(new
+                {
+                    error = "InvalidLikeValue",
+                    message = "The likeOrDislike value must be 1 (like) or -1 (dislike)."
+                });
+            }
+
+            var thread = await _context.Threads.FirstOrDefaultAsync(t => t.Id == threadId && !t.Deleted);
+
+            if (thread == null)
+            {
+                return new NotFoundObjectResult(new
+                {
+                    error = "ThreadNotFound",
+                    message = "The thread does not exist or has been deleted."
+                });
+            }
+
+            var existingLike = await _context.Likes
+                .FirstOrDefaultAsync(l => l.UserId == userId && l.ThreadId == threadId);
+
+            if (existingLike != null)
+            {
+                if (existingLike.LikeOrDislike == likeOrDislike)
+                {
+                    _context.Likes.Remove(existingLike);
+                    await _context.SaveChangesAsync();
+                    return new OkObjectResult(new { message = "Your vote has been removed." });
+                }
+
+                existingLike.LikeOrDislike = likeOrDislike;
+                _context.Likes.Update(existingLike);
+            }
+            else
+            {
+                var newLike = new Likes
+                {
+                    UserId = userId,
+                    ThreadId = threadId,
+                    LikeOrDislike = likeOrDislike
+                };
+
+                await _context.Likes.AddAsync(newLike);
+            }
+
+            await _context.SaveChangesAsync();
+
+            return new OkObjectResult(new { message = "Your vote has been recorded." });
         }
 
         public async Task<IActionResult> GetThreads(int pageNumber, int pageSize)
