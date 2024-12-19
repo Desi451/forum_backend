@@ -95,7 +95,7 @@ namespace forum_backend.Controllers
         [HttpGet("{id}/profile-picture")]
         public async Task<IActionResult> GetUserProfilePicture([FromRoute] int id)
         {
-            return await _userService.GetUserProfilePicture(id);
+            return await _userService.GetUserProfilePictureUrl(id);
         }
     }
 }
