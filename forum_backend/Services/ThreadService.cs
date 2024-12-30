@@ -4,7 +4,6 @@ using forum_backend.Entities;
 using forum_backend.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
 
 namespace forum_backend.Services
 {

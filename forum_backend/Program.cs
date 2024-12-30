@@ -23,6 +23,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IThreadService, ThreadService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
 
 // JWT configuration
 builder.Services.AddAuthentication(options =>
