@@ -23,6 +23,6 @@ namespace forum_backend.Entities
         public DateTimeOffset BanDate { get; set; }
 
         [Required]
-        public DateTimeOffset BanUntil { get; set; }
+        public DateTimeOffset? BanUntil { get; set; }
     }
 }

@@ -1,4 +1,4 @@
-﻿using forum_backend.Entities;
+﻿using forum_backend.DTOs;
 using forum_backend.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,12 +14,23 @@ namespace forum_backend.Controllers
             _adminService = adminService;
         }
 
+        /// <summary>
+        /// Sets and creates data for banned user
+        /// </summary>
+        /// <param name="userId">Banned user ID</param>
+        /// <param name="banData">Ban DTO</param>
+        /// <returns>Success or error message</returns>
         [HttpPost("ban-user/{userId}")]
-        public async Task<IActionResult> BanUser([FromRoute] int userId)
+        public async Task<IActionResult> BanUser([FromRoute] int userId, [FromBody] BanUserDTO banData)
         {
-            return await _adminService.BanUser(userId);
+            return await _adminService.BanUser(userId, banData);
         }
 
+        /// <summary>
+        /// Manually unbanning user
+        /// </summary>
+        /// <param name="userId">Banned user ID</param>
+        /// <returns>Success or error message</returns>
         [HttpPatch("unban-user/{userId}")]
         public async Task<IActionResult> UnbanUser([FromRoute] int userId)
         {
@@ -32,16 +43,27 @@ namespace forum_backend.Controllers
             return await _adminService.GetBannedUsers(pageNumber, pageSize);
         }
 
+        /// <summary>
+        /// Creates data for reported user
+        /// </summary>
+        /// <param name="userId">Reported user ID</param>
+        /// <param name="reason">Reason</param>
+        /// <returns>Success or error message</returns>
         [HttpPost("report-user/{userId}")]
-        public async Task<IActionResult> ReportUser([FromRoute] int userId)
+        public async Task<IActionResult> ReportUser([FromRoute] int userId, [FromBody] string reason)
         {
-            return await _adminService.ReportUser(userId);
+            return await _adminService.ReportUser(userId, reason);
         }
 
-        [HttpDelete("delete-report/{userId}")]
-        public async Task<IActionResult> DeleteReport([FromRoute] int userId)
+        /// <summary>
+        /// Manually deleting report
+        /// </summary>
+        /// <param name="reportId">Report ID</param>
+        /// <returns>Success or error message</returns>
+        [HttpDelete("delete-report/{reportId}")]
+        public async Task<IActionResult> DeleteReport([FromRoute] int reportId)
         {
-            return await _adminService.DeleteReport(userId);
+            return await _adminService.DeleteReport(reportId);
         }
 
         [HttpGet("reported-user")]
