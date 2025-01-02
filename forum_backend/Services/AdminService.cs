@@ -127,7 +127,49 @@ namespace forum_backend.Services
 
         public async Task<IActionResult> GetBannedUsers(int pageNumber, int pageSize)
         {
-            return null;
+            var claimsIdentity = _httpContextAccessor.HttpContext?.User.Identity as ClaimsIdentity;
+            if (claimsIdentity == null)
+                return new UnauthorizedResult();
+
+            var roleClaim = claimsIdentity.FindFirst("UserRole");
+            if (roleClaim == null || roleClaim.Value != "1")
+                return new UnauthorizedResult();
+
+            var userIdClaim = claimsIdentity.FindFirst("UserID");
+            if (userIdClaim == null)
+                return new ForbidResult("Matrix error.");
+
+            if (pageNumber <= 0 || pageSize <= 0)
+                return new BadRequestObjectResult("Page number and page size must be greater than zero.");
+
+            var skip = (pageNumber - 1) * pageSize;
+
+            var bannedUsers = await _context.Bans
+                .Include(b => b.BannedUser)
+                .Include(b => b.BanningModerator)
+                .Skip(skip)
+                .Take(pageSize)
+                .Select(b => new GetBannedUsersDTO
+                {
+                    BannedUserId = b.BannedUserId,
+                    BannedUserNickname = b.BannedUser.Nickname,
+                    BannedUserLogin = b.BannedUser.Login,
+                    BannedUserEMail = b.BannedUser.EMail,
+                    Reason = b.Reason,
+                    DateOfBan = b.BanDate,
+                    BannedUntil = b.BanUntil,
+                    AdminId = b.BanningModeratorId,
+                    AdminNickname = b.BanningModerator.Nickname,
+                    AdminLogin = b.BanningModerator.Login
+                })
+                .ToListAsync();
+
+            if (!bannedUsers.Any())
+            {
+                return new NotFoundObjectResult("WoW! No one is banned!");
+            }
+
+            return new OkObjectResult(bannedUsers);
         }
 
         public async Task<IActionResult> ReportUser(int userId, string reason)
@@ -226,7 +268,50 @@ namespace forum_backend.Services
 
         public async Task<IActionResult> GetReportedUsers(int pageNumber, int pageSize)
         {
-            return null;
+            var claimsIdentity = _httpContextAccessor.HttpContext?.User.Identity as ClaimsIdentity;
+            if (claimsIdentity == null)
+                return new UnauthorizedResult();
+
+            var roleClaim = claimsIdentity.FindFirst("UserRole");
+            if (roleClaim == null || roleClaim.Value != "1")
+                return new UnauthorizedResult();
+
+            var userIdClaim = claimsIdentity.FindFirst("UserID");
+            if (userIdClaim == null)
+                return new ForbidResult("Matrix error.");
+
+            if (pageNumber <= 0 || pageSize <= 0)
+                return new BadRequestObjectResult("Page number and page size must be greater than zero.");
+
+            var skip = (pageNumber - 1) * pageSize;
+
+            var reports = await _context.Reports
+                .Include(r => r.ReportedUser)
+                .Include(r => r.ReportingUser)
+                .Skip(skip)
+                .Take(pageSize)
+                .Select(r => new GetReportedUserDTO
+                {
+                    ReportId = r.Id,
+                    ReportedUserId = r.ReportedUserId,
+                    ReportedUserNickname = r.ReportedUser.Nickname,
+                    ReportedUserLogin = r.ReportedUser.Login,
+                    ReportedUserMail = r.ReportedUser.EMail,
+                    Reason = r.Reason,
+                    ReportDate = r.ReportDate,
+                    ReportingUserId = r.ReportingUserId,
+                    ReportingUserNickname = r.ReportingUser.Nickname,
+                    ReportingUserLogin = r.ReportingUser.Login,
+                    ReportingUserMail = r.ReportingUser.EMail
+                })
+                .ToListAsync();
+
+            if (!reports.Any())
+            {
+                return new NotFoundObjectResult("WoW! No one is reported!");
+            }
+
+            return new OkObjectResult(reports);
         }
     }
 }

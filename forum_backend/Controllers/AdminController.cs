@@ -37,8 +37,14 @@ namespace forum_backend.Controllers
             return await _adminService.UnbanUser(userId);
         }
 
+        /// <summary>
+        /// Gets max 20 banned users from database
+        /// </summary>
+        /// <param name="pageNumber">Page number</param>
+        /// <param name="pageSize">Number of banned users in page</param>
+        /// <returns>List of banned users</returns>
         [HttpGet("banned-users")]
-        public async Task<IActionResult> GetBannedUsers([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 15)
+        public async Task<IActionResult> GetBannedUsers([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20)
         {
             return await _adminService.GetBannedUsers(pageNumber, pageSize);
         }
@@ -66,8 +72,14 @@ namespace forum_backend.Controllers
             return await _adminService.DeleteReport(reportId);
         }
 
-        [HttpGet("reported-user")]
-        public async Task<IActionResult> GetReportedUsers([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 15)
+        /// <summary>
+        /// Gets max 20 reported users from database
+        /// </summary>
+        /// <param name="pageNumber">Page number</param>
+        /// <param name="pageSize">Number of banned users in page</param>
+        /// <returns>List of reported users</returns>
+        [HttpGet("reported-users")]
+        public async Task<IActionResult> GetReportedUsers([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 20)
         {
             return await _adminService.GetReportedUsers(pageNumber, pageSize);
         }
