@@ -1,6 +1,7 @@
 using forum_backend.Database.Context;
 using forum_backend.Interfaces;
 using forum_backend.Services;
+using forum_backend.Workers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
@@ -24,6 +25,7 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IThreadService, ThreadService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddHostedService<UnbanWorker>();
 
 // JWT configuration
 builder.Services.AddAuthentication(options =>
