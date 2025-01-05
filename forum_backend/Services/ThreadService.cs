@@ -2,6 +2,7 @@
 using forum_backend.DTOs;
 using forum_backend.Entities;
 using forum_backend.Interfaces;
+using forum_backend.Utilities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -660,8 +661,8 @@ namespace forum_backend.Services
         {
             var threadsQuery = _context.Threads
                 .Include(t => t.Author)
-                .Include(t => t.ThreadTags!.ToList())
-                    .ThenInclude(tt => tt.Tag)
+                .Include(t => t.ThreadTags) // Usuń ToList() tutaj
+                    .ThenInclude(tt => tt.Tag) // Ładuj zagnieżdżone dane
                 .Include(t => t.ThreadImages)
                 .Where(t => !t.Deleted)
                 .OrderByDescending(t => t.CreationDate);
@@ -699,7 +700,7 @@ namespace forum_backend.Services
         {
             var mainThread = await _context.Threads
                 .Include(t => t.Author)
-                .Include(t => t.ThreadTags!.ToList())
+                .Include(t => t.ThreadTags)
                     .ThenInclude(tt => tt.Tag)
                 .Include(t => t.ThreadImages)
                 .FirstOrDefaultAsync(t => t.Id == id && t.PrimeThreadId == null && t.SupThreadId == null);
@@ -715,7 +716,7 @@ namespace forum_backend.Services
 
             var allThreads = await _context.Threads
                 .Include(st => st.Author)
-                .Include(st => st.ThreadTags!.ToList())
+                .Include(st => st.ThreadTags)
                     .ThenInclude(tt => tt.Tag)
                 .Include(st => st.ThreadImages)
                 .ToListAsync();
@@ -781,6 +782,15 @@ namespace forum_backend.Services
             var likesCount = _context.Likes.Count(l => l.ThreadId == thread.Id && l.LikeOrDislike > 0);
             var dislikesCount = _context.Likes.Count(l => l.ThreadId == thread.Id && l.LikeOrDislike < 0);
 
+            List<string> newImages = new List<string>();
+            if (thread.ThreadImages.Count() > 0)
+            {
+                foreach (var threadImage in thread.ThreadImages)
+                {
+                    newImages.Add(BusinessHelper.GenUrlThread(threadImage.Image, thread.Id));
+                }
+            }
+
             return new GetThreadAndSubthreadsDTO
             {
                 ThreadId = thread.Id,
@@ -791,7 +801,7 @@ namespace forum_backend.Services
                 CreationDate = thread.CreationDate,
                 Deleted = thread.Deleted,
                 Tags = thread.ThreadTags?.Select(tt => tt.Tag.Tag).ToList(),
-                Images = thread.ThreadImages?.Select(img => img.Image).ToList(),
+                Images = newImages ?? null,
                 Likes = likesCount - dislikesCount,
                 Subthreads = allThreads
                     .Where(subthread => subthread.SupThreadId == thread.Id && !subthread.Deleted)
@@ -824,7 +834,7 @@ namespace forum_backend.Services
                 Description = t.Description,
                 CreationDate = t.CreationDate,
                 Tags = t.ThreadTags != null && t.ThreadTags.Any() ? t.ThreadTags.Select(tt => tt.Tag.Tag).ToList() : null,
-                Image = t.ThreadImages != null && t.ThreadImages.Any() ? t.ThreadImages.FirstOrDefault()?.Image : null
+                Image = t.ThreadImages != null && t.ThreadImages.Any() ? BusinessHelper.GenUrlThread(t.ThreadImages.FirstOrDefault()?.Image, t.Id) : null
             }).ToList();
 
             return new OkObjectResult(new

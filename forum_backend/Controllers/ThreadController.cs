@@ -44,7 +44,7 @@ namespace forum_backend.Controllers
         /// <param name="subthreadDTO">Subthread DTO</param>
         /// <returns>Success or error message</returns>
         [HttpPost("create-subthread/{parentThreadId}")]
-        public async Task<IActionResult> CreateSubthread([FromRoute] int parentThreadId, [FromBody] CreateSubthreadDTO subthreadDTO)
+        public async Task<IActionResult> CreateSubthread([FromRoute] int parentThreadId, [FromForm] CreateSubthreadDTO subthreadDTO)
         {
             return await _threadService.CreateSubthread(parentThreadId, subthreadDTO);
         }
@@ -90,7 +90,7 @@ namespace forum_backend.Controllers
         /// <param name="pageSize">Number of threads in page</param>
         /// <returns>List of threads</returns>
         [HttpGet("threads")]
-        public async Task<IActionResult> GetThreads([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 15)
+        public async Task<IActionResult> GetThreads([FromQuery] int pageNumber, [FromQuery] int pageSize)
         {
             return await _threadService.GetThreads(pageNumber, pageSize);
         }
