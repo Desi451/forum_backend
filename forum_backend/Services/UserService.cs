@@ -315,13 +315,9 @@ namespace forum_backend.Services
                 });
             }
 
-            var fileName = Path.GetFileName(filePath);
-            var forumBackendHostAddress = "http://localhost:5179";
-            var fileUrl = $"{forumBackendHostAddress}/images/users/{fileName}";
-
             return new OkObjectResult(new
             {
-                profilePictureUrl = fileUrl
+                profilePictureUrl = BusinessHelper.GenUrlUser(filePath, user.Id)
             });
         }
     }

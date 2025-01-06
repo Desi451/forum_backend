@@ -797,7 +797,7 @@ namespace forum_backend.Services
                 Title = thread.Title,
                 Description = thread.Description,
                 AuthorNickname = thread.Author.Nickname,
-                AuthorProfilePicture = thread.Author.ProfilePicture,
+                AuthorProfilePicture = BusinessHelper.GenUrlUser(thread.Author.ProfilePicture, thread.Author.Id),
                 CreationDate = thread.CreationDate,
                 Deleted = thread.Deleted,
                 Tags = thread.ThreadTags?.Select(tt => tt.Tag.Tag).ToList(),
@@ -818,12 +818,29 @@ namespace forum_backend.Services
                 return new BadRequestObjectResult("Page number and size must be greater than zero.");
             }
 
+            var userIdFromToken = _httpContextAccessor.HttpContext?.User.FindFirst("UserID")?.Value;
+            int? userId = null;
+
+            if (!string.IsNullOrEmpty(userIdFromToken) && int.TryParse(userIdFromToken, out int parsedUserId))
+            {
+                userId = parsedUserId;
+            }
+
             var totalCount = await query.CountAsync();
 
             var threads = await query
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
+
+            Dictionary<int, bool> subscriptions = new Dictionary<int, bool>();
+            if (userId.HasValue)
+            {
+                var threadIds = threads.Select(t => t.Id).ToList();
+                subscriptions = await _context.Subscriptions
+                    .Where(s => threadIds.Contains(s.ThreadId) && s.UserId == userId)
+                    .ToDictionaryAsync(s => s.ThreadId, s => s.Subscribe);
+            }
 
             var threadDTOs = threads.Select(t => new GetThreadsDTO
             {
@@ -834,7 +851,8 @@ namespace forum_backend.Services
                 Description = t.Description,
                 CreationDate = t.CreationDate,
                 Tags = t.ThreadTags != null && t.ThreadTags.Any() ? t.ThreadTags.Select(tt => tt.Tag.Tag).ToList() : null,
-                Image = t.ThreadImages != null && t.ThreadImages.Any() ? BusinessHelper.GenUrlThread(t.ThreadImages.FirstOrDefault()?.Image, t.Id) : null
+                Image = t.ThreadImages != null && t.ThreadImages.Any() ? BusinessHelper.GenUrlThread(t.ThreadImages.FirstOrDefault().Image, t.Id) : null,
+                Subscribe = subscriptions.ContainsKey(t.Id) && subscriptions[t.Id]
             }).ToList();
 
             return new OkObjectResult(new

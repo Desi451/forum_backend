@@ -10,6 +10,6 @@
         public DateTimeOffset CreationDate { get; set; }
         public List<string>? Tags { get; set; }
         public string? Image { get; set; }
-
+        public bool Subscribe { get; set; }
     }
 }
