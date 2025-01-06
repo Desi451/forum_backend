@@ -53,6 +53,8 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+forum_backend.Utilities.BusinessHelper.Configure(builder.Configuration);
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
