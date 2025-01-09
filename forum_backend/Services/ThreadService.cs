@@ -664,8 +664,45 @@ namespace forum_backend.Services
                 .Include(t => t.ThreadTags) // Usuń ToList() tutaj
                     .ThenInclude(tt => tt.Tag) // Ładuj zagnieżdżone dane
                 .Include(t => t.ThreadImages)
-                .Where(t => !t.Deleted)
+                .Where(t => !t.Deleted && t.SupThreadId == null && t.PrimeThreadId == null)
                 .OrderByDescending(t => t.CreationDate);
+
+            return await GetPaginatedThreads(threadsQuery, pageNumber, pageSize);
+        }
+
+        public async Task<IActionResult> GetUserThreads(int userId, int pageNumber, int pageSize)
+        {
+            var threadsQuery = _context.Threads
+                .Include(t => t.Author)
+                .Include(t => t.ThreadTags) // Usuń ToList() tutaj
+                    .ThenInclude(tt => tt.Tag) // Ładuj zagnieżdżone dane
+                .Include(t => t.ThreadImages)
+                .Where(t => !t.Deleted && t.AuthorId == userId && t.SupThreadId == null && t.PrimeThreadId == null)
+                .OrderByDescending(t => t.CreationDate);
+
+            return await GetPaginatedThreads(threadsQuery, pageNumber, pageSize);
+        }
+
+        public async Task<IActionResult> GetMostDislikedThreads(int pageNumber, int pageSize)
+        {
+            var threadsQuery = _context.Threads
+                .Include(t => t.Author)
+                .Include(t => t.ThreadTags)
+                    .ThenInclude(tt => tt.Tag)
+                .Include(t => t.ThreadImages)
+                .Where(t => !t.Deleted && t.SupThreadId == null && t.PrimeThreadId == null)
+                .GroupJoin(
+                    _context.Likes,
+                    thread => thread.Id,
+                    like => like.ThreadId,
+                    (thread, likes) => new
+                    {
+                        Thread = thread,
+                        TotalLikes = likes.Sum(like => like.LikeOrDislike)
+                    })
+                .Where(t => t.TotalLikes < 0)
+                .OrderBy(t => t.TotalLikes)
+                .Select(t => t.Thread);
 
             return await GetPaginatedThreads(threadsQuery, pageNumber, pageSize);
         }

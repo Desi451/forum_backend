@@ -147,6 +147,7 @@ namespace forum_backend.Services
             var bannedUsers = await _context.Bans
                 .Include(b => b.BannedUser)
                 .Include(b => b.BanningModerator)
+                .Where(b => b.BannedUser.status == -1)
                 .Skip(skip)
                 .Take(pageSize)
                 .Select(b => new GetBannedUsersDTO

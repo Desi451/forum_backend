@@ -84,7 +84,7 @@ namespace forum_backend.Controllers
         }
 
         /// <summary>
-        /// Gets max 15 threads from database
+        /// Gets threads from database
         /// </summary>
         /// <param name="pageNumber">Page number</param>
         /// <param name="pageSize">Number of threads in page</param>
@@ -93,6 +93,31 @@ namespace forum_backend.Controllers
         public async Task<IActionResult> GetThreads([FromQuery] int pageNumber, [FromQuery] int pageSize)
         {
             return await _threadService.GetThreads(pageNumber, pageSize);
+        }
+
+        /// <summary>
+        /// Gets one user threads
+        /// </summary>
+        /// <param name="userId">User id</param>
+        /// <param name="pageNumber">Page number</param>
+        /// <param name="pageSize">Number of threads in page</param>
+        /// <returns>List of threads</returns>
+        [HttpGet("user-threads/{userId}")]
+        public async Task<IActionResult> GetUserThreads([FromRoute] int userId, [FromQuery] int pageNumber, [FromQuery] int pageSize)
+        {
+            return await _threadService.GetUserThreads(userId, pageNumber, pageSize);
+        }
+
+        /// <summary>
+        /// Gets most disliked threads
+        /// </summary>
+        /// <param name="pageNumber">Page number</param>
+        /// <param name="pageSize">Number of threads in page</param>
+        /// <returns>List of threads</returns>
+        [HttpGet("most-disliked-threads")]
+        public async Task<IActionResult> GetMostDislikedThreads([FromQuery] int pageNumber, [FromQuery] int pageSize)
+        {
+            return await _threadService.GetMostDislikedThreads(pageNumber, pageSize);
         }
 
         /// <summary>
