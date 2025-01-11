@@ -698,10 +698,9 @@ namespace forum_backend.Services
                     (thread, likes) => new
                     {
                         Thread = thread,
-                        TotalLikes = likes.Sum(like => like.LikeOrDislike)
+                        TotalLikes = likes.Sum(l => l.LikeOrDislike)
                     })
                 .Where(t => t.TotalLikes < 0)
-                .OrderBy(t => t.TotalLikes)
                 .Select(t => t.Thread);
 
             return await GetPaginatedThreads(threadsQuery, pageNumber, pageSize);
