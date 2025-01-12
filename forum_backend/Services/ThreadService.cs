@@ -721,13 +721,17 @@ namespace forum_backend.Services
 
             var subscribedThreadsQuery = _context.Subscriptions
                 .Where(s => s.UserId == userId && s.Subscribe)
+                .Include(s => s.Thread)
+                    .ThenInclude(t => t.Author)
+                .Include(s => s.Thread)
+                    .ThenInclude(t => t.ThreadTags)
+                        .ThenInclude(tt => tt.Tag)
+                .Include(s => s.Thread)
+                    .ThenInclude(t => t.ThreadImages)
                 .Select(s => s.Thread)
-                .Include(t => t.Author)
-                .Include(t => t.ThreadTags!.ToList())
-                    .ThenInclude(tt => tt.Tag)
-                .Include(t => t.ThreadImages)
                 .Where(t => !t.Deleted)
                 .OrderByDescending(t => t.CreationDate);
+
 
             return await GetPaginatedThreads(subscribedThreadsQuery, pageNumber, pageSize);
         }

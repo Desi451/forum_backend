@@ -67,9 +67,9 @@ namespace forum_backend.Controllers
         /// <param name="likeOrDislike">Int (1 -> like; -1 -> dislike)</param>
         /// <returns>Success or error message</returns>
         [HttpPost("like-dislike/{threadId}")]
-        public async Task<IActionResult> LikeOrDislikeThread([FromRoute] int threadId, [FromBody] int likeOrDislike)
+        public async Task<IActionResult> LikeOrDislikeThread([FromRoute] int threadId, [FromBody] LikeDislikeDTO likeOrDislike)
         {
-            return await _threadService.LikeOrDislikeThread(threadId, likeOrDislike);
+            return await _threadService.LikeOrDislikeThread(threadId, likeOrDislike.LikeOrDislike);
         }
 
         /// <summary>
