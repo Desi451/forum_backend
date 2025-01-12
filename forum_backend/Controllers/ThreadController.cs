@@ -54,7 +54,7 @@ namespace forum_backend.Controllers
         /// </summary>
         /// <param name="threadId">Thread ID</param>
         /// <returns>Success or error message</returns>
-        [HttpPatch("delete-thread/{threadId}")]
+        [HttpDelete("delete-thread/{threadId}")]
         public async Task<IActionResult> DeleteThread([FromRoute] int threadId)
         {
             return await _threadService.DeleteThread(threadId);

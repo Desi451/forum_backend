@@ -34,6 +34,6 @@ public static class BusinessHelper
 
         var fileName = Path.GetFileName(path);
         var forumBackendHostAddress = _configuration["AppSettings:ForumBackendHostAddress"];
-        return $"{forumBackendHostAddress}/images/users/{userId}/{fileName}";
+        return $"{forumBackendHostAddress}/images/users/{fileName}";
     }
 }
