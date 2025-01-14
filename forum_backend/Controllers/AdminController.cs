@@ -56,9 +56,9 @@ namespace forum_backend.Controllers
         /// <param name="reason">Reason</param>
         /// <returns>Success or error message</returns>
         [HttpPost("report-user/{userId}")]
-        public async Task<IActionResult> ReportUser([FromRoute] int userId, [FromBody] string reason)
+        public async Task<IActionResult> ReportUser([FromRoute] int userId, [FromBody] ReportDTO reason)
         {
-            return await _adminService.ReportUser(userId, reason);
+            return await _adminService.ReportUser(userId, reason.Reason);
         }
 
         /// <summary>

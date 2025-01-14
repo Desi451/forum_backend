@@ -281,7 +281,7 @@ namespace forum_backend.Services
                 Nickname = user.Nickname,
                 Login = user.Login,
                 CreationDate = user.CreationDate,
-                ProfilePicture = user.ProfilePicture,
+                ProfilePicture = BusinessHelper.GenUrlUser(user.ProfilePicture,user.Id),
                 Role = user.Role,
                 Mail = user.EMail,
                 Status = user.status,

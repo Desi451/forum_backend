@@ -5,7 +5,7 @@
         public int ThreadId { get; set; }
         public string Title { get; set; } = null!;
         public int AuthorId { get; set; }
-        public string Author { get; set; } = null!;
+        public string AuthorNickname { get; set; } = null!;
         public string Description { get; set; } = null!;
         public DateTimeOffset CreationDate { get; set; }
         public List<string>? Tags { get; set; }
