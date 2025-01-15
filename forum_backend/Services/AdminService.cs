@@ -144,6 +144,8 @@ namespace forum_backend.Services
 
             var skip = (pageNumber - 1) * pageSize;
 
+            var totalCount = await _context.Bans.Where(b => b.BannedUser.status == -1).CountAsync();
+
             var bannedUsers = await _context.Bans
                 .Include(b => b.BannedUser)
                 .Include(b => b.BanningModerator)
@@ -170,7 +172,15 @@ namespace forum_backend.Services
                 return new NotFoundObjectResult("WoW! No one is banned!");
             }
 
-            return new OkObjectResult(bannedUsers);
+            return new OkObjectResult(new 
+            {
+                Data = bannedUsers,
+                TotalCount = totalCount,
+                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize),
+                CurrentPage = pageNumber,
+                PageSize = pageSize
+
+            });
         }
 
         public async Task<IActionResult> ReportUser(int userId, string reason)
@@ -286,6 +296,8 @@ namespace forum_backend.Services
 
             var skip = (pageNumber - 1) * pageSize;
 
+            var totalCount = await _context.Reports.CountAsync();
+
             var reports = await _context.Reports
                 .Include(r => r.ReportedUser)
                 .Include(r => r.ReportingUser)
@@ -312,7 +324,15 @@ namespace forum_backend.Services
                 return new NotFoundObjectResult("WoW! No one is reported!");
             }
 
-            return new OkObjectResult(reports);
+            return new OkObjectResult(new
+            {
+                Data = reports,
+                TotalCount = totalCount,
+                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize),
+                CurrentPage = pageNumber,
+                PageSize = pageSize
+
+            });
         }
     }
 }
