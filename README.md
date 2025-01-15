@@ -16,4 +16,4 @@ Do przechowywania danych projekt wykorzystuje Microsoft SQL Server, co zapewnia:
 
 Serwer może być stosowany jako backend dla aplikacji webowych.
 
-Link do <a href="[url](https://github.com/Desi451/forum_backend/wiki)">wiki</a> projektu.
+Link do <a href="https://github.com/Desi451/forum_backend/wiki">wiki</a> projektu.
