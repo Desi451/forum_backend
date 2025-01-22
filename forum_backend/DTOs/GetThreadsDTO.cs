@@ -8,6 +8,7 @@
         public string AuthorNickname { get; set; } = null!;
         public string Description { get; set; } = null!;
         public DateTimeOffset CreationDate { get; set; }
+        public int Likes { get; set; }
         public List<string>? Tags { get; set; }
         public string? Image { get; set; }
         public bool Subscribe { get; set; }

@@ -661,11 +661,21 @@ namespace forum_backend.Services
         {
             var threadsQuery = _context.Threads
                 .Include(t => t.Author)
-                .Include(t => t.ThreadTags) // Usuń ToList() tutaj
-                    .ThenInclude(tt => tt.Tag) // Ładuj zagnieżdżone dane
+                .Include(t => t.ThreadTags)
+                    .ThenInclude(tt => tt.Tag)
                 .Include(t => t.ThreadImages)
                 .Where(t => !t.Deleted && t.SupThreadId == null && t.PrimeThreadId == null)
-                .OrderByDescending(t => t.CreationDate);
+                .Select(t => new
+                {
+                    Thread = t,
+                    Likes = _context.Likes
+                        .Where(l => l.ThreadId == t.Id)
+                        .Sum(l => l.LikeOrDislike),
+                    Tags = t.ThreadTags
+                        .Select(tt => tt.Tag.Tag) // Pobieramy tekst Tagu
+                        .ToList()
+                })
+                .OrderByDescending(t => t.Thread.CreationDate);
 
             return await GetPaginatedThreads(threadsQuery, pageNumber, pageSize);
         }
@@ -674,11 +684,21 @@ namespace forum_backend.Services
         {
             var threadsQuery = _context.Threads
                 .Include(t => t.Author)
-                .Include(t => t.ThreadTags) // Usuń ToList() tutaj
-                    .ThenInclude(tt => tt.Tag) // Ładuj zagnieżdżone dane
+                .Include(t => t.ThreadTags)
+                    .ThenInclude(tt => tt.Tag)
                 .Include(t => t.ThreadImages)
                 .Where(t => !t.Deleted && t.AuthorId == userId && t.SupThreadId == null && t.PrimeThreadId == null)
-                .OrderByDescending(t => t.CreationDate);
+                .Select(t => new
+                {
+                    Thread = t,
+                    Likes = _context.Likes
+                        .Where(l => l.ThreadId == t.Id)
+                        .Sum(l => l.LikeOrDislike),
+                    Tags = t.ThreadTags
+                        .Select(tt => tt.Tag.Tag)
+                        .ToList()
+                })
+                .OrderByDescending(t => t.Thread.CreationDate);
 
             return await GetPaginatedThreads(threadsQuery, pageNumber, pageSize);
         }
@@ -698,12 +718,51 @@ namespace forum_backend.Services
                     (thread, likes) => new
                     {
                         Thread = thread,
-                        TotalLikes = likes.Sum(l => l.LikeOrDislike)
+                        TotalLikes = likes.Sum(l => l.LikeOrDislike),
+                        Tags = thread.ThreadTags
+                            .Select(tt => tt.Tag.Tag)
+                            .ToList()
                     })
                 .Where(t => t.TotalLikes < 0)
-                .Select(t => t.Thread);
+                .Select(t => new
+                {
+                    Thread = t.Thread,
+                    Likes = t.TotalLikes,
+                    Tags = t.Tags
+                });
 
             return await GetPaginatedThreads(threadsQuery, pageNumber, pageSize);
+        }
+
+        public async Task<IActionResult> GetTopLikedThreads()
+        {
+            var threadsQuery = _context.Threads
+                .Include(t => t.Author)
+                .Include(t => t.ThreadTags)
+                    .ThenInclude(tt => tt.Tag)
+                .Include(t => t.ThreadImages)
+                .Where(t => !t.Deleted && t.SupThreadId == null && t.PrimeThreadId == null)
+                .GroupJoin(
+                    _context.Likes,
+                    thread => thread.Id,
+                    like => like.ThreadId,
+                    (thread, likes) => new
+                    {
+                        Thread = thread,
+                        TotalLikes = likes.Sum(l => l.LikeOrDislike),
+                        Tags = thread.ThreadTags
+                            .Select(tt => tt.Tag.Tag)
+                            .ToList()
+                    })
+                .OrderByDescending(t => t.TotalLikes) // Sortowanie po największej liczbie "like'ów"
+                .Select(t => new
+                {
+                    Thread = t.Thread,
+                    Likes = t.TotalLikes,
+                    Tags = t.Tags
+                });
+
+            return await GetPaginatedThreads(threadsQuery, 1, 3);
         }
 
         public async Task<IActionResult> GetSubscribedThreads(int pageNumber, int pageSize)
@@ -728,9 +787,18 @@ namespace forum_backend.Services
                         .ThenInclude(tt => tt.Tag)
                 .Include(s => s.Thread)
                     .ThenInclude(t => t.ThreadImages)
-                .Select(s => s.Thread)
-                .Where(t => !t.Deleted)
-                .OrderByDescending(t => t.CreationDate);
+                .Select(s => new
+                {
+                    Thread = s.Thread,
+                    Likes = _context.Likes
+                        .Where(l => l.ThreadId == s.Thread.Id)
+                        .Sum(l => l.LikeOrDislike),
+                    Tags = s.Thread.ThreadTags
+                        .Select(tt => tt.Tag.Tag)
+                        .ToList()
+                })
+                .Where(t => !t.Thread.Deleted)
+                .OrderByDescending(t => t.Thread.CreationDate);
 
 
             return await GetPaginatedThreads(subscribedThreadsQuery, pageNumber, pageSize);
@@ -770,13 +838,23 @@ namespace forum_backend.Services
         {
             var threadsQuery = _context.Threads
                 .Include(t => t.Author)
-                .Include(t => t.ThreadTags!.ToList())
+                .Include(t => t.ThreadTags)
                     .ThenInclude(tt => tt.Tag)
                 .Include(t => t.ThreadImages)
                 .Where(t => !t.Deleted &&
                     (t.Title.Contains(keyWord) ||
-                    t.ThreadTags!.Any(tt => tt.Tag.Tag.Contains(keyWord))))
-                .OrderByDescending(t => t.CreationDate);
+                     t.ThreadTags.Any(tt => tt.Tag.Tag.Contains(keyWord))))
+                .Select(t => new
+                {
+                    Thread = t,
+                    Likes = _context.Likes
+                        .Where(l => l.ThreadId == t.Id)
+                        .Sum(l => l.LikeOrDislike),
+                    Tags = t.ThreadTags
+                        .Select(tt => tt.Tag.Tag)
+                        .ToList()
+                })
+                .OrderByDescending(t => t.Thread.CreationDate);
 
             return await GetPaginatedThreads(threadsQuery, pageNumber, pageSize);
         }
@@ -852,7 +930,7 @@ namespace forum_backend.Services
             };
         }
 
-        private async Task<IActionResult> GetPaginatedThreads(IQueryable<Threads> query, int pageNumber, int pageSize)
+        private async Task<IActionResult> GetPaginatedThreads(IQueryable<dynamic> query, int pageNumber, int pageSize)
         {
             if (pageNumber <= 0 || pageSize <= 0)
             {
@@ -883,17 +961,24 @@ namespace forum_backend.Services
                     .ToDictionaryAsync(s => s.ThreadId, s => s.Subscribe);
             }
 
-            var threadDTOs = threads.Select(t => new GetThreadsDTO
+            var threadDTOs = threads.Select(t =>
             {
-                ThreadId = t.Id,
-                Title = t.Title,
-                AuthorId = t.AuthorId,
-                AuthorNickname = t.Author.Nickname,
-                Description = t.Description,
-                CreationDate = t.CreationDate,
-                Tags = t.ThreadTags != null && t.ThreadTags.Any() ? t.ThreadTags.Select(tt => tt.Tag.Tag).ToList() : null,
-                Image = t.ThreadImages != null && t.ThreadImages.Any() ? BusinessHelper.GenUrlThread(t.ThreadImages.FirstOrDefault().Image, t.Id) : null,
-                Subscribe = subscriptions.ContainsKey(t.Id) && subscriptions[t.Id]
+                var thread = t.Thread; // Wyciągnięcie typu
+                return new GetThreadsDTO
+                {
+                    ThreadId = thread.Id,
+                    Title = thread.Title,
+                    AuthorId = thread.AuthorId,
+                    AuthorNickname = thread.Author.Nickname,
+                    Description = thread.Description,
+                    CreationDate = thread.CreationDate,
+                    Likes = t.Likes,
+                    Tags = t.Tags, // Przypisanie listy tagów
+                    Image = thread.ThreadImages != null && thread.ThreadImages.Any()
+                        ? BusinessHelper.GenUrlThread(thread.ThreadImages.FirstOrDefault()?.Image, thread.Id)
+                        : null,
+                    Subscribe = subscriptions.ContainsKey(thread.Id) && subscriptions[thread.Id]
+                };
             }).ToList();
 
             return new OkObjectResult(new

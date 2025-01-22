@@ -14,6 +14,7 @@ namespace forum_backend.Interfaces
         Task<IActionResult> GetThreads(int pageNumber, int pageSize);
         Task<IActionResult> GetUserThreads(int userId, int pageNumber, int pageSize);
         Task<IActionResult> GetMostDislikedThreads(int pageNumber, int pageSize);
+        Task<IActionResult> GetTopLikedThreads();
         Task<IActionResult> GetSubscribedThreads(int pageNumber, int pageSize);
         Task<IActionResult> GetThreadAndSubthreads(int id);
         Task<IActionResult> SearchThread(string keyWord, int pageNumber, int pageSize);

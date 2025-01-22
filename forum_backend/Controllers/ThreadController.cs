@@ -121,6 +121,16 @@ namespace forum_backend.Controllers
         }
 
         /// <summary>
+        /// Gets top 3 threads
+        /// </summary>
+        /// <returns>List of top 3 threads</returns>
+        [HttpGet("top-liked-threads")]
+        public async Task<IActionResult> GetTopLikedThreads()
+        {
+            return await _threadService.GetTopLikedThreads();
+        }
+
+        /// <summary>
         /// Gets max 15 subscribed threads from database
         /// </summary>
         /// <param name="pageNumber">Page number</param>
