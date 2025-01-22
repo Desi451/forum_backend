@@ -1,10 +1,10 @@
-﻿using forum_backend.Database.Context;
+﻿using System.Security.Claims;
+using forum_backend.Database.Context;
 using forum_backend.DTOs;
 using forum_backend.Entities;
 using forum_backend.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Claims;
 
 namespace forum_backend.Services
 {
@@ -169,10 +169,10 @@ namespace forum_backend.Services
 
             if (!bannedUsers.Any())
             {
-                return new NotFoundObjectResult("WoW! No one is banned!");
+                return new NotFoundObjectResult(new { message = "WoW! No one is banned!" });
             }
 
-            return new OkObjectResult(new 
+            return new OkObjectResult(new
             {
                 Data = bannedUsers,
                 TotalCount = totalCount,
@@ -223,7 +223,7 @@ namespace forum_backend.Services
             {
                 await _context.Reports.AddAsync(report);
                 await _context.SaveChangesAsync();
-                return new OkObjectResult("We have received your report!");
+                return new OkObjectResult(new { message = "We have received your report!" });
             }
             catch (Exception ex)
             {
@@ -268,7 +268,7 @@ namespace forum_backend.Services
             try
             {
                 await _context.SaveChangesAsync();
-                return new OkObjectResult("Report has been deleted!");
+                return new OkObjectResult(new { message = "Report has been deleted!" });
             }
             catch (Exception ex)
             {

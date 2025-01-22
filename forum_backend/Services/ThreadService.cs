@@ -842,7 +842,7 @@ namespace forum_backend.Services
                     .ThenInclude(tt => tt.Tag)
                 .Include(t => t.ThreadImages)
                 .Where(t => !t.Deleted &&
-                    (t.Title.Contains(keyWord) ||
+                    (t.Title.Contains(keyWord) && t.PrimeThread == null ||
                      t.ThreadTags.Any(tt => tt.Tag.Tag.Contains(keyWord))))
                 .Select(t => new
                 {
@@ -952,33 +952,29 @@ namespace forum_backend.Services
                 .Take(pageSize)
                 .ToListAsync();
 
-            Dictionary<int, bool> subscriptions = new Dictionary<int, bool>();
+            Dictionary<int, bool> subscriptions = new();
             if (userId.HasValue)
             {
-                var threadIds = threads.Select(t => t.Id).ToList();
+                var threadIds = threads.Select(t => t.Thread.Id).ToList();
                 subscriptions = await _context.Subscriptions
                     .Where(s => threadIds.Contains(s.ThreadId) && s.UserId == userId)
                     .ToDictionaryAsync(s => s.ThreadId, s => s.Subscribe);
             }
 
-            var threadDTOs = threads.Select(t =>
+            var threadDTOs = threads.Select(t => new GetThreadsDTO
             {
-                var thread = t.Thread; // Wyciągnięcie typu
-                return new GetThreadsDTO
-                {
-                    ThreadId = thread.Id,
-                    Title = thread.Title,
-                    AuthorId = thread.AuthorId,
-                    AuthorNickname = thread.Author.Nickname,
-                    Description = thread.Description,
-                    CreationDate = thread.CreationDate,
-                    Likes = t.Likes,
-                    Tags = t.Tags, // Przypisanie listy tagów
-                    Image = thread.ThreadImages != null && thread.ThreadImages.Any()
-                        ? BusinessHelper.GenUrlThread(thread.ThreadImages.FirstOrDefault()?.Image, thread.Id)
-                        : null,
-                    Subscribe = subscriptions.ContainsKey(thread.Id) && subscriptions[thread.Id]
-                };
+                ThreadId = t.Thread.Id,
+                Title = t.Thread.Title,
+                AuthorId = t.Thread.AuthorId,
+                AuthorNickname = t.Thread.Author.Nickname,
+                Description = t.Thread.Description,
+                CreationDate = t.Thread.CreationDate,
+                Likes = t.Likes,
+                Tags = t.Tags,
+                Image = t.Thread.ThreadImages != null && t.Thread.ThreadImages.Count > 0
+                    ? BusinessHelper.GenUrlThread(t.Thread.ThreadImages[0].Image, t.Thread.Id)
+                    : null,
+                Subscribe = subscriptions.ContainsKey(t.Thread.Id) && subscriptions[t.Thread.Id]
             }).ToList();
 
             return new OkObjectResult(new
@@ -990,5 +986,6 @@ namespace forum_backend.Services
                 PageSize = pageSize
             });
         }
+
     }
 }
