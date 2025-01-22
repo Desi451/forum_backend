@@ -934,7 +934,7 @@ namespace forum_backend.Services
         {
             if (pageNumber <= 0 || pageSize <= 0)
             {
-                return new BadRequestObjectResult("Page number and size must be greater than zero.");
+                return new BadRequestObjectResult(new { message = "Page number and size must be greater than zero." });
             }
 
             var userIdFromToken = _httpContextAccessor.HttpContext?.User.FindFirst("UserID")?.Value;

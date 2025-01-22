@@ -40,11 +40,11 @@ namespace forum_backend.Services
 
             var user = await _context.Users.FindAsync(userId);
             if (user == null)
-                return new NotFoundObjectResult("User not found!");
+                return new NotFoundObjectResult( new { message = "User not found!" });
 
             var existingBan = await _context.Bans.FirstOrDefaultAsync(b => b.BannedUserId == userId);
             if (existingBan != null)
-                return new ConflictObjectResult("User is already banned!");
+                return new ConflictObjectResult( new { message = "User is already banned!" });
 
             using var transaction = await _context.Database.BeginTransactionAsync();
 
@@ -76,7 +76,7 @@ namespace forum_backend.Services
                 await _context.SaveChangesAsync();
                 await transaction.CommitAsync();
 
-                return new OkObjectResult("User banned successfully.");
+                return new OkObjectResult(new { message = "User banned successfully." });
             }
             catch (Exception ex)
             {
@@ -104,11 +104,11 @@ namespace forum_backend.Services
 
             var user = await _context.Users.FindAsync(userId);
             if (user == null)
-                return new NotFoundObjectResult("User not found!");
+                return new NotFoundObjectResult(new { message = "User not found!" });
 
             var ban = await _context.Bans.FirstOrDefaultAsync(b => b.BannedUserId == userId);
             if (ban == null)
-                return new BadRequestObjectResult("User is not banned!");
+                return new BadRequestObjectResult(new { message = "User is not banned!" });
 
             user.status = 0;
             _context.Users.Update(user);
@@ -116,7 +116,7 @@ namespace forum_backend.Services
             try
             {
                 await _context.SaveChangesAsync();
-                return new OkObjectResult("User unbanned successfully.");
+                return new OkObjectResult(new { message = "User unbanned successfully." });
             }
             catch (Exception ex)
             {
@@ -140,7 +140,7 @@ namespace forum_backend.Services
                 return new ForbidResult("Matrix error.");
 
             if (pageNumber <= 0 || pageSize <= 0)
-                return new BadRequestObjectResult("Page number and page size must be greater than zero.");
+                return new BadRequestObjectResult(new { message = "Page number and page size must be greater than zero." });
 
             var skip = (pageNumber - 1) * pageSize;
 
@@ -200,7 +200,7 @@ namespace forum_backend.Services
 
             var reportedUser = await _context.Users.FindAsync(userId);
             if (reportedUser == null)
-                return new NotFoundObjectResult("User not found!");
+                return new NotFoundObjectResult(new { message = "User not found!" });
 
             if (reportedUser.status == -1)
             {
@@ -248,11 +248,11 @@ namespace forum_backend.Services
 
             var report = await _context.Reports.FindAsync(reportId);
             if (report == null)
-                return new NotFoundObjectResult("Report not found!");
+                return new NotFoundObjectResult(new { message = "Report not found!" });
 
             var reportedUser = await _context.Users.FindAsync(report.ReportedUserId);
             if (reportedUser == null)
-                return new NotFoundObjectResult("Report user not found!");
+                return new NotFoundObjectResult(new { message = "Report user not found!" });
 
             if (reportedUser.status == -1)
             {
@@ -292,7 +292,7 @@ namespace forum_backend.Services
                 return new ForbidResult("Matrix error.");
 
             if (pageNumber <= 0 || pageSize <= 0)
-                return new BadRequestObjectResult("Page number and page size must be greater than zero.");
+                return new BadRequestObjectResult(new { message = "Page number and page size must be greater than zero." });
 
             var skip = (pageNumber - 1) * pageSize;
 
@@ -321,7 +321,7 @@ namespace forum_backend.Services
 
             if (!reports.Any())
             {
-                return new NotFoundObjectResult("WoW! No one is reported!");
+                return new NotFoundObjectResult(new { message = "WoW! No one is reported!" });
             }
 
             return new OkObjectResult(new
