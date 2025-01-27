@@ -120,6 +120,15 @@ namespace forum_backend.Services
             else
             {
                 tempPassword = user.Password;
+
+                if (user.status == -1)
+                {
+                    return new BadRequestObjectResult(new
+                    {
+                        error = "UserIsBanned",
+                        message = "Your account is banned!"
+                    });
+                }
             }
 
             if (!PasswordHelper.CheckPassword(login.Password, tempPassword))
